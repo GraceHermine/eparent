@@ -295,7 +295,7 @@ export default function App() {
           <Text style={styles.navLabel}>Messages</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/ProfileScreen')}>
           <Ionicons name="person-outline" size={24} color="#9CA3AF" />
           <Text style={styles.navLabel}>Profil</Text>
         </TouchableOpacity>
