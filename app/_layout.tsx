@@ -1,24 +1,25 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+// app/_layout.tsx
+import React from 'react';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+    <SafeAreaProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="LoginScreen" />
+        <Stack.Screen name="PasswordScreen" />
+        <Stack.Screen name="OTPScreen" />
+        <Stack.Screen name="NewPasswordScreen" />
+        <Stack.Screen name="HomeParent" />
+        <Stack.Screen name="HomeStudents" />
+        <Stack.Screen name="Forums" />
+        <Stack.Screen name="ForumDetail" />
+        <Stack.Screen name="EmploiScreen" />
+        <Stack.Screen name="EmploiDetailScreen" />
+        <Stack.Screen name="InfoScreen" />
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
