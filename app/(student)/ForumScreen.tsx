@@ -63,7 +63,7 @@ export default function ForumsScreen({ navigation }: Props) {
     <TouchableOpacity
       style={styles.forumItem}
       onPress={() => {
-        router.push('/ForumDetailScreen')}}
+        router.push('/screens/ForumDetailScreen')}}
       
     >
       <Ionicons name={item.icon} size={24} color="#4A6BFF" />
