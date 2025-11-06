@@ -62,13 +62,13 @@ export default function LoginScreen() {
             />
 
             {/* NAVIGATION EXPO ROUTER */}
-            <TouchableOpacity onPress={() => router.push('/PasswordScreen')}>
+            <TouchableOpacity onPress={() => router.replace("/(student)/HomeStudents")}>
               <Text style={styles.forgotPassword}>Mot de passe oublié ?</Text>
             </TouchableOpacity>
 
             <Button
               mode="contained"
-              onPress={() => router.push('/HomeParent')}
+              onPress={() => router.replace("/(parent)/HomeParent")}
               contentStyle={styles.buttonContent}
               style={styles.button}
               labelStyle={styles.buttonLabel}

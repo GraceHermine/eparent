@@ -12,13 +12,6 @@ export default function RootLayout() {
         <Stack.Screen name="PasswordScreen" />
         <Stack.Screen name="OTPScreen" />
         <Stack.Screen name="NewPasswordScreen" />
-        <Stack.Screen name="HomeParent" />
-        <Stack.Screen name="HomeStudents" />
-        <Stack.Screen name="Forums" />
-        <Stack.Screen name="ForumDetail" />
-        <Stack.Screen name="EmploiScreen" />
-        <Stack.Screen name="EmploiDetailScreen" />
-        <Stack.Screen name="InfoScreen" />
       </Stack>
     </SafeAreaProvider>
   );

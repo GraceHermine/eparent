@@ -275,31 +275,6 @@ export default function App() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
-
-      {/* Bottom Navigation modernisé */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <View style={styles.navIconActive}>
-            <Ionicons name="home" size={24} color="#8B5CF6" />
-          </View>
-          <Text style={styles.navLabelActive}>Accueil</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="book-outline" size={24} color="#9CA3AF" />
-          <Text style={styles.navLabel}>Cours</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="chatbubble-outline" size={24} color="#9CA3AF" />
-          <Text style={styles.navLabel}>Messages</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/ProfileScreen')}>
-          <Ionicons name="person-outline" size={24} color="#9CA3AF" />
-          <Text style={styles.navLabel}>Profil</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
@@ -722,42 +697,4 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
 
-  // Bottom Navigation
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    paddingBottom: 8,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  navItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-  },
-  navIconActive: {
-    backgroundColor: '#F3E8FF',
-    padding: 8,
-    borderRadius: 12,
-    marginBottom: 4,
-  },
-  navLabelActive: {
-    color: '#8B5CF6',
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  navLabel: {
-    color: '#9CA3AF',
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 8,
-  },
 });

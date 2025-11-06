@@ -109,24 +109,6 @@ export default function HomeParents() {
           </View>
         </View>
       </ScrollView>
-
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItemActive}>
-          <Ionicons name="home" size={24} color="#3D22D4" />
-          <Text style={styles.navTextActive}>Home</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="chatbubble-outline" size={24} color="#666" />
-          <Text style={styles.navText}>Messages</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="person-outline" size={24} color="#666" />
-          <Text style={styles.navText}>Profil</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
@@ -283,31 +265,5 @@ const styles = StyleSheet.create({
   absenceTime: {
     fontSize: 12,
     color: '#999',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    justifyContent: 'space-around',
-  },
-  navItem: {
-    alignItems: 'center',
-  },
-  navItemActive: {
-    alignItems: 'center',
-  },
-  navText: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
-  },
-  navTextActive: {
-    fontSize: 12,
-    color: '#3D22D4',
-    marginTop: 4,
-    fontWeight: '600',
   },
 });
