@@ -211,7 +211,7 @@ export default function App() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Mes matières</Text>
-            <TouchableOpacity onPress={() => router.push('/InfoScreen')}>
+            <TouchableOpacity onPress={() => router.push('/screens/InfoScreen')}>
               <Text style={styles.seeAllBtn}>Notes détaillées</Text>
             </TouchableOpacity>
           </View>

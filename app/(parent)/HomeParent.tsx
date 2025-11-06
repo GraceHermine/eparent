@@ -47,7 +47,7 @@ export default function HomeParents() {
             <Text style={styles.actionText}>Emploi du temps</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/InfoScreen')}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/screens/InfoScreen')}>
             <Ionicons name="time-outline" size={28} color="#3D22D4" />
             <Text style={styles.actionText}>Retards</Text>
           </TouchableOpacity>
@@ -65,7 +65,7 @@ export default function HomeParents() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Les notes</Text>
-            <TouchableOpacity onPress={() => router.push('/InfoScreen')}>
+            <TouchableOpacity onPress={() => router.push('/screens/InfoScreen')}>
               <Text style={styles.seeAll}>Tout voir</Text>
             </TouchableOpacity>
           </View>
@@ -89,7 +89,7 @@ export default function HomeParents() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Les absences</Text>
-            <TouchableOpacity onPress={() => router.push('/InfoScreen')}>
+            <TouchableOpacity onPress={() => router.push('/screens/InfoScreen')}>
               <Text style={styles.seeAll}>Tout voir</Text>
             </TouchableOpacity>
           </View>

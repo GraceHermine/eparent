@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // === Types ===
@@ -16,20 +16,34 @@ interface Absence {
   justifie: string;
 }
 
+// === Composant Ligne animée ===
+const AnimatedRow: React.FC<{ children: React.ReactNode; delay: number }> = ({ children, delay }) => {
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 400,
+      delay,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  return <Animated.View style={{ opacity: fadeAnim }}>{children}</Animated.View>;
+};
+
 export default function InfoScreen() {
   // === Données typées ===
   const notes: Note[] = [
-    { matiere: 'Maths', devoir1: '18/20', devoir2: '' },
-    // Ajoute d'autres lignes ici
+    { matiere: 'Maths', devoir1: '18/20', devoir2: '17/20' },
+    { matiere: 'Anglais', devoir1: '15/20', devoir2: '16/20' },
+    { matiere: 'Physique', devoir1: '14/20', devoir2: '' },
+    { matiere: 'Histoire', devoir1: '19/20', devoir2: '18/20' },
   ];
 
   const absences: Absence[] = [
-    {
-      date: '24/10/2025',
-      heure: '07h - 10h',
-      motif: 'Rendez-vous médical',
-      justifie: 'Oui',
-    },
+    { date: '24/10/2025', heure: '07h - 10h', motif: 'Rendez-vous médical', justifie: 'Oui' },
+    { date: '01/11/2025', heure: '09h - 12h', motif: 'Transport', justifie: 'Non' },
   ];
 
   return (
@@ -41,7 +55,6 @@ export default function InfoScreen() {
         {/* === SECTION NOTES === */}
         <Text style={styles.sectionTitle}>Notes</Text>
         <View style={styles.table}>
-          {/* En-tête */}
           <View style={styles.headerRow}>
             <View style={[styles.headerCell, styles.matiereHeader]}>
               <Text style={styles.headerText}>Matières</Text>
@@ -54,23 +67,24 @@ export default function InfoScreen() {
             </View>
           </View>
 
-          {/* Lignes remplies */}
-          {notes.map((note, index) => (
-            <View key={index} style={styles.row}>
-              <View style={[styles.cell, styles.matiereCell]}>
-                <Text style={styles.cellText}>{note.matiere}</Text>
+          {notes.map((note, i) => (
+            <AnimatedRow key={i} delay={i * 100}>
+              <View style={styles.row}>
+                <View style={[styles.cell, styles.matiereCell]}>
+                  <Text style={styles.cellText}>{note.matiere}</Text>
+                </View>
+                <View style={styles.cell}>
+                  <Text style={styles.cellText}>{note.devoir1}</Text>
+                </View>
+                <View style={styles.cell}>
+                  <Text style={styles.cellText}>{note.devoir2}</Text>
+                </View>
               </View>
-              <View style={styles.cell}>
-                <Text style={styles.cellText}>{note.devoir1}</Text>
-              </View>
-              <View style={styles.cell}>
-                <Text style={styles.cellText}>{note.devoir2}</Text>
-              </View>
-            </View>
+            </AnimatedRow>
           ))}
 
-          {/* Lignes vides (4) */}
-          {Array.from({ length: 4 }).map((_, i) => (
+          {/* Lignes vides pour compléter l'affichage */}
+          {Array.from({ length: 3 }).map((_, i) => (
             <View key={`empty-note-${i}`} style={styles.row}>
               <View style={[styles.cell, styles.matiereCell]} />
               <View style={styles.cell} />
@@ -82,7 +96,6 @@ export default function InfoScreen() {
         {/* === SECTION ABSENCES === */}
         <Text style={styles.sectionTitle}>Absences</Text>
         <View style={styles.table}>
-          {/* En-tête */}
           <View style={styles.headerRow}>
             <View style={[styles.headerCell, { flex: 1.2 }]}>
               <Text style={styles.headerText}>Date</Text>
@@ -98,28 +111,27 @@ export default function InfoScreen() {
             </View>
           </View>
 
-          {/* Lignes remplies */}
-          {absences.map((absence, index) => (
-            <View key={index} style={styles.row}>
-              <View style={[styles.cell, { flex: 1.2 }]}>
-                <Text style={styles.cellText}>{absence.date}</Text>
+          {absences.map((absence, i) => (
+            <AnimatedRow key={i} delay={i * 100}>
+              <View style={styles.row}>
+                <View style={[styles.cell, { flex: 1.2 }]}>
+                  <Text style={styles.cellText}>{absence.date}</Text>
+                </View>
+                <View style={styles.cell}>
+                  <Text style={styles.cellText}>{absence.heure}</Text>
+                </View>
+                <View style={[styles.cell, { flex: 1.5 }]}>
+                  <Text style={[styles.cellText, styles.motifText]}>{absence.motif}</Text>
+                </View>
+                <View style={styles.cell}>
+                  <Text style={styles.cellText}>{absence.justifie}</Text>
+                </View>
               </View>
-              <View style={styles.cell}>
-                <Text style={styles.cellText}>{absence.heure}</Text>
-              </View>
-              <View style={[styles.cell, { flex: 1.5 }]}>
-                <Text style={[styles.cellText, styles.motifText]}>
-                  {absence.motif}
-                </Text>
-              </View>
-              <View style={styles.cell}>
-                <Text style={styles.cellText}>{absence.justifie}</Text>
-              </View>
-            </View>
+            </AnimatedRow>
           ))}
 
-          {/* Lignes vides (3) */}
-          {Array.from({ length: 3 }).map((_, i) => (
+          {/* Lignes vides */}
+          {Array.from({ length: 2 }).map((_, i) => (
             <View key={`empty-absence-${i}`} style={styles.row}>
               <View style={[styles.cell, { flex: 1.2 }]} />
               <View style={styles.cell} />
@@ -131,7 +143,9 @@ export default function InfoScreen() {
 
         {/* === SECTION RETARDS === */}
         <Text style={styles.sectionTitle}>Retards</Text>
-        <View style={styles.retardBox} />
+        <View style={styles.retardBox}>
+          <Text style={styles.retardText}>Aucun retard enregistré</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -141,18 +155,18 @@ export default function InfoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
   },
   scrollContent: {
     padding: 20,
     paddingTop: 40,
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 30,
-    color: '#000',
+    color: '#4A6BFF',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -164,18 +178,18 @@ const styles = StyleSheet.create({
   },
   table: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#ddd',
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 24,
     backgroundColor: '#fff',
-    elevation: 2,
+    elevation: 3,
   },
   headerRow: {
     flexDirection: 'row',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f0f4ff',
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderBottomColor: '#ddd',
   },
   headerCell: {
     flex: 1,
@@ -183,12 +197,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRightWidth: 1,
-    borderRightColor: '#ccc',
+    borderRightColor: '#ddd',
   },
   headerText: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#444',
+    color: '#4A6BFF',
   },
   row: {
     flexDirection: 'row',
@@ -202,7 +216,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRightWidth: 1,
-    borderRightColor: '#ccc',
+    borderRightColor: '#ddd',
   },
   matiereHeader: {
     flex: 1.2,
@@ -217,15 +231,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   motifText: {
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#555',
   },
   retardBox: {
     height: 80,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#ddd',
     borderRadius: 12,
     backgroundColor: '#fff',
-    marginBottom: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+  },
+  retardText: {
+    color: '#555',
+    fontSize: 14,
   },
 });
