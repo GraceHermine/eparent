@@ -1,15 +1,15 @@
-// app/(student)/_layout.tsx
+// app/(prof)/_layout.tsx
 import React from "react";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function StudentLayout() {
+export default function ProfLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#8B5CF6",
-        tabBarInactiveTintColor: "#9CA3AF",
+        tabBarActiveTintColor: "#3D22D4",
+        tabBarInactiveTintColor: "#000000",
         tabBarStyle: {
           backgroundColor: "#fff",
           borderTopWidth: 1,
@@ -23,7 +23,7 @@ export default function StudentLayout() {
       }}
     >
       <Tabs.Screen
-        name="HomeStudents"
+        name="HomeProf"
         options={{
           tabBarLabel: "Accueil",
           tabBarIcon: ({ color, size }) => (
@@ -31,21 +31,13 @@ export default function StudentLayout() {
           ),
         }}
       />
+      
       <Tabs.Screen
-        name="EmploiScreen"
-        options={{
-          tabBarLabel: "Cours",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="book-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="ForumScreen"
+        name="Message"
         options={{
           tabBarLabel: "Messages",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubble-outline" size={size} color={color} />
+            <Ionicons name="chatbubble-ellipses-outline" size={size} color={color} />
           ),
         }}
       />

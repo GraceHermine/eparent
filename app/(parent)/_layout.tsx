@@ -8,8 +8,8 @@ export default function ParentLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#10B981",
-        tabBarInactiveTintColor: "#9CA3AF",
+        tabBarActiveTintColor: "#3D22D4",
+        tabBarInactiveTintColor: "#000000",
         tabBarStyle: {
           backgroundColor: "#fff",
           borderTopWidth: 1,
@@ -31,12 +31,13 @@ export default function ParentLayout() {
           ),
         }}
       />
+      
       <Tabs.Screen
-        name="EmploiScreen"
+        name="MessageScreen"
         options={{
-          tabBarLabel: "Cours",
+          tabBarLabel: "Messages",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="book-outline" size={size} color={color} />
+            <Ionicons name="chatbubble-ellipses-outline" size={size} color={color} />
           ),
         }}
       />

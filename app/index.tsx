@@ -7,7 +7,7 @@ export default function Index() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace("/splashscreen");
+      router.replace("/(screens)/splashscreen");
     }, 0); // Laisse le temps au router de s'initialiser
 
     return () => clearTimeout(timer);

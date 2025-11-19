@@ -63,7 +63,7 @@ export default function ForumsScreen({ navigation }: Props) {
     <TouchableOpacity
       style={styles.forumItem}
       onPress={() => {
-        router.push('/screens/ForumDetailScreen')}}
+        router.push('/ForumDetailScreen')}}
       
     >
       <Ionicons name={item.icon} size={24} color="#4A6BFF" />
@@ -160,6 +160,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    marginTop: 50,
   },
   header: {
     flexDirection: 'row',

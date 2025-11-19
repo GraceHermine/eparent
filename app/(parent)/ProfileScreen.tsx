@@ -1,16 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  SafeAreaView, 
-  StatusBar, 
-  Image, 
-  TouchableOpacity, 
-  ScrollView,
-  Switch,
-  Alert
-} from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, StatusBar, Image, TouchableOpacity, ScrollView, Switch, Alert} from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
@@ -31,7 +20,7 @@ export default function ProfileScreen() {
     mainTeacher: 'M. KOUASSI Jean',
     classRank: 5,
     totalSubjects: 12,
-    profileImage: 'https://randomuser.me/api/portraits/women/44.jpg',
+    
   };
 
   const statistics = {
@@ -46,14 +35,6 @@ export default function ProfileScreen() {
     { period: 'En cours', average: 15.22, rank: 5, maxRank: 35 },
   ];
 
-  const badges = [
-    { id: 1, title: 'Élève Assidu', icon: 'calendar-check', color: '#10B981', earned: true },
-    { id: 2, title: 'Top 5 Classe', icon: 'trophy', color: '#F59E0B', earned: true },
-    { id: 3, title: 'Progression +', icon: 'trending-up', color: '#8B5CF6', earned: true },
-    { id: 4, title: 'Excellence', icon: 'star', color: '#EF4444', earned: false },
-    { id: 5, title: 'Participation', icon: 'hand-right', color: '#3B82F6', earned: true },
-    { id: 6, title: 'Travail Équipe', icon: 'account-group', color: '#EC4899', earned: false },
-  ];
 
   const handleEditProfile = () => {
     Alert.alert('Modifier le profil', 'Fonctionnalité en développement');
@@ -103,7 +84,7 @@ export default function ProfileScreen() {
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
             <Image 
-              source={{ uri: studentData.profileImage }} 
+              
               style={styles.avatar}
             />
             <TouchableOpacity style={styles.cameraButton}>
@@ -239,7 +220,7 @@ export default function ProfileScreen() {
 
         {/* Mon Parcours - Moyennes par trimestre */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Mon Parcours</Text>
+          <Text style={styles.sectionTitle}>Résultats Scolaires</Text>
           
           {trimesterData.map((trimester, index) => (
             <View key={index} style={styles.trimesterCard}>
@@ -265,43 +246,12 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        {/* Badges académiques */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Mes badges</Text>
-          
-          <View style={styles.badgesGrid}>
-            {badges.map((badge) => (
-              <View 
-                key={badge.id} 
-                style={[
-                  styles.badgeCard,
-                  { opacity: badge.earned ? 1 : 0.4 }
-                ]}
-              >
-                <View style={[styles.badgeIconContainer, { backgroundColor: badge.color + '20' }]}>
-                  <MaterialCommunityIcons 
-                    name={badge.icon as any} 
-                    size={28} 
-                    color={badge.earned ? badge.color : '#9CA3AF'} 
-                  />
-                </View>
-                <Text style={styles.badgeTitle}>{badge.title}</Text>
-                {badge.earned && (
-                  <View style={styles.earnedBadge}>
-                    <Ionicons name="checkmark-circle" size={16} color={badge.color} />
-                  </View>
-                )}
-              </View>
-            ))}
-          </View>
-        </View>
-
         {/* Paramètres et Actions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Paramètres</Text>
           
           <View style={styles.settingsCard}>
-            <TouchableOpacity style={styles.settingRow} onPress={handleChangePassword}>
+            <TouchableOpacity style={styles.settingRow} onPress={() => router.push('/(auth)/PasswordScreen')}>
               <View style={styles.settingLeft}>
                 <View style={[styles.settingIcon, { backgroundColor: '#DBEAFE' }]}>
                   <Ionicons name="lock-closed" size={20} color="#3B82F6" />
@@ -342,7 +292,7 @@ export default function ProfileScreen() {
 
             <View style={styles.divider} />
 
-            <TouchableOpacity style={styles.settingRow} onPress={handleLogout}>
+            <TouchableOpacity style={styles.settingRow} onPress={ () => router.push('/(auth)/LoginScreen')  }>
               <View style={styles.settingLeft}>
                 <View style={[styles.settingIcon, { backgroundColor: '#FEE2E2' }]}>
                   <Ionicons name="log-out" size={20} color="#EF4444" />
@@ -386,338 +336,67 @@ const InfoRow = ({ icon, label, value, iconColor, isMaterial = false }: InfoRowP
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FAFAFA',
-  },
+  container: { flex: 1, backgroundColor: '#FAFAFA', marginTop: 30},
 
   // Header
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FAFAFA',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
-  editButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3E8FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#FAFAFA' },
+  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { fontSize: 20, fontWeight: '700', color: '#1F2937' },
+  editButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3E8FF', justifyContent: 'center', alignItems: 'center' },
 
   // Section Photo de profil
-  profileSection: {
-    alignItems: 'center',
-    paddingVertical: 20,
-    backgroundColor: 'white',
-    marginHorizontal: 20,
-    marginTop: 10,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  avatarContainer: {
-    position: 'relative',
-    marginBottom: 16,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 4,
-    borderColor: '#E5E7EB',
-  },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#8B5CF6',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: 'white',
-  },
-  studentName: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 6,
-  },
-  studentClass: {
-    fontSize: 15,
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  studentMatricule: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    fontWeight: '500',
-  },
+  profileSection: { alignItems: 'center', paddingVertical: 20, backgroundColor: 'white', marginHorizontal: 20, marginTop: 10, borderRadius: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
+  avatarContainer: { position: 'relative', marginBottom: 16 },
+  avatar: { width: 100, height: 100, borderRadius: 50, borderWidth: 4, borderColor: '#E5E7EB' },
+  cameraButton: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#8B5CF6', width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: 'white' },
+  studentName: { fontSize: 24, fontWeight: '700', color: '#1F2937', marginBottom: 6 },
+  studentClass: { fontSize: 15, color: '#6B7280', marginBottom: 4 },
+  studentMatricule: { fontSize: 13, color: '#9CA3AF', fontWeight: '500' },
 
   // Statistiques
-  statsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginTop: 20,
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  statIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  statValue: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '600',
-    marginBottom: 10,
-  },
-  progressBar: {
-    width: '100%',
-    height: 4,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
+  statsContainer: { flexDirection: 'row', paddingHorizontal: 20, marginTop: 20, gap: 12 },
+  statCard: { flex: 1, padding: 16, borderRadius: 16, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  statIconContainer: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  statValue: { fontSize: 22, fontWeight: '700', color: '#1F2937', marginBottom: 4 },
+  statLabel: { fontSize: 12, color: '#6B7280', fontWeight: '600', marginBottom: 10 },
+  progressBar: { width: '100%', height: 4, backgroundColor: '#E5E7EB', borderRadius: 2, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 2 },
 
   // Sections
-  section: {
-    paddingHorizontal: 20,
-    marginTop: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 14,
-  },
+  section: { paddingHorizontal: 20, marginTop: 24 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1F2937', marginBottom: 14 },
 
   // Card d'informations
-  infoCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-  },
-  infoLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  infoIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
-    flex: 1,
-  },
-  infoValue: {
-    fontSize: 14,
-    color: '#1F2937',
-    fontWeight: '600',
-    marginLeft: 10,
-    textAlign: 'right',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#F3F4F6',
-    marginHorizontal: 14,
-  },
+  infoCard: { backgroundColor: 'white', borderRadius: 16, padding: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 14 },
+  infoLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  infoIcon: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  infoLabel: { fontSize: 14, color: '#6B7280', fontWeight: '500', flex: 1 },
+  infoValue: { fontSize: 14, color: '#1F2937', fontWeight: '600', marginLeft: 10, textAlign: 'right' },
+  divider: { height: 1, backgroundColor: '#F3F4F6', marginHorizontal: 14 },
 
   // Trimestre Cards
-  trimesterCard: {
-    backgroundColor: 'white',
-    padding: 18,
-    borderRadius: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  trimesterHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  trimesterPeriod: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  trimesterRank: {
-    fontSize: 13,
-    color: '#6B7280',
-  },
-  trimesterAverageContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  trimesterAverage: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#8B5CF6',
-  },
-  trimesterAverageLabel: {
-    fontSize: 16,
-    color: '#9CA3AF',
-    fontWeight: '600',
-    marginLeft: 2,
-  },
-  trimesterProgressBar: {
-    height: 8,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  trimesterProgressFill: {
-    height: '100%',
-    backgroundColor: '#8B5CF6',
-    borderRadius: 4,
-  },
+  trimesterCard: { backgroundColor: 'white', padding: 18, borderRadius: 16, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  trimesterHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  trimesterPeriod: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 4 },
+  trimesterRank: { fontSize: 13, color: '#6B7280' },
+  trimesterAverageContainer: { flexDirection: 'row', alignItems: 'baseline' },
+  trimesterAverage: { fontSize: 28, fontWeight: '700', color: '#8B5CF6' },
+  trimesterAverageLabel: { fontSize: 16, color: '#9CA3AF', fontWeight: '600', marginLeft: 2 },
+  trimesterProgressBar: { height: 8, backgroundColor: '#F3F4F6', borderRadius: 4, overflow: 'hidden' },
+  trimesterProgressFill: { height: '100%', backgroundColor: '#8B5CF6', borderRadius: 4 },
 
   // Badges
-  badgesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  badgeCard: {
-    width: '30.5%',
-    backgroundColor: 'white',
-    padding: 14,
-    borderRadius: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    position: 'relative',
-  },
-  badgeIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  badgeTitle: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#1F2937',
-    textAlign: 'center',
-  },
-  earnedBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-  },
+  badgesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  badgeCard: { width: '30.5%', backgroundColor: 'white', padding: 14, borderRadius: 16, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2, position: 'relative' },
+  badgeIconContainer: { width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+  badgeTitle: { fontSize: 11, fontWeight: '600', color: '#1F2937', textAlign: 'center' },
+  earnedBadge: { position: 'absolute', top: 8, right: 8 },
 
   // Paramètres
-  settingsCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-  },
-  settingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  settingIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 14,
-  },
-  settingLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-
+  settingsCard: { backgroundColor: 'white', borderRadius: 16, padding: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  settingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 14 },
+  settingLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  settingIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+  settingLabel: { fontSize: 15, fontWeight: '600', color: '#1F2937' }
 });

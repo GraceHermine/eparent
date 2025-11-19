@@ -1,13 +1,6 @@
 // app/LoginScreen.tsx
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ImageBackground,
-  TouchableOpacity,
-  StatusBar,
-} from 'react-native';
+import {View, Text, StyleSheet, ImageBackground, TouchableOpacity,StatusBar } from 'react-native';
 import { TextInput, Button, Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -29,23 +22,15 @@ export default function LoginScreen() {
           <StatusBar barStyle="light-content" backgroundColor="#3D22D4" />
 
           <View style={styles.header}>
-            <Text style={styles.appName}>EuTrack</Text>
+            <Text style={styles.appName}>CHRIST-ROI</Text>
           </View>
 
           <View style={styles.formContainer}>
             <Text style={styles.title}>Connexion</Text>
             <Text style={styles.subtitle}>Bon retour ! Veuillez vous connecter</Text>
 
-            <TextInput
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              mode="outlined"
-              style={styles.input}
-              outlineColor="#ccc"
-              activeOutlineColor="#3D22D4"
-              theme={{ roundness: 12 }}
-              left={<TextInput.Icon icon="email-outline" />}
+            <TextInput label="Email" value={email} onChangeText={setEmail} mode="outlined" style={styles.input}
+              outlineColor="#ccc" activeOutlineColor="#3D22D4" theme={{ roundness: 12 }} left={<TextInput.Icon icon="email-outline" />}
             />
 
             <TextInput
@@ -62,7 +47,7 @@ export default function LoginScreen() {
             />
 
             {/* NAVIGATION EXPO ROUTER */}
-            <TouchableOpacity onPress={() => router.replace("/(student)/HomeStudents")}>
+            <TouchableOpacity onPress={() => router.replace("/(auth)/PasswordScreen")}>
               <Text style={styles.forgotPassword}>Mot de passe oublié ?</Text>
             </TouchableOpacity>
 
@@ -76,8 +61,8 @@ export default function LoginScreen() {
               Se Connecter
             </Button>
 
-            <TouchableOpacity onPress={() => router.push('/HomeStudents')}>
-              <Text style={styles.forgotPassword}>Je suis un élève</Text>
+            <TouchableOpacity onPress={() => router.replace("/(prof)/HomeProf")}>
+              <Text style={styles.forgotPassword}>ici</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>

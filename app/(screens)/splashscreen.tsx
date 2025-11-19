@@ -8,7 +8,7 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace("/LoginScreen");
+      router.replace("/(auth)/LoginScreen");
     }, 2000);
 
     return () => clearTimeout(timer);
@@ -16,7 +16,7 @@ export default function SplashScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>EtuTrack</Text>
+      <Text style={styles.title}>CHRIST-ROI</Text>
       <ActivityIndicator size="large" color="#fff" style={{ marginTop: 20 }} />
     </View>
   );

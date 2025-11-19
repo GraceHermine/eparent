@@ -19,11 +19,9 @@ export default function ForgotPasswordScreen({ navigation }: any) {
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={28} color="#3D22D4" />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={() => router.push('/LoginScreen')}>
+          <Ionicons name="arrow-back" size={28} color="#3D22D4" style={styles.backIcon} />
+        </TouchableOpacity>
 
         <View style={styles.content}>
           <Text style={styles.title}>Mots de passe oublié ?</Text>
@@ -70,4 +68,5 @@ const styles = StyleSheet.create({
   button: { borderRadius: 12, marginTop: 16 },
   buttonContent: { height: 52 },
   buttonLabel: { fontSize: 16, fontWeight: '600', textTransform: 'uppercase' },
+  backIcon: { marginLeft: 25, marginTop: 32 },
 });
