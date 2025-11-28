@@ -1,402 +1,284 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, StatusBar, Image, TouchableOpacity, ScrollView, Switch, Alert} from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import React, { useState } from "react";
+import { 
+  View, Text, StyleSheet, SafeAreaView, StatusBar, 
+  TouchableOpacity, ScrollView, Switch, Alert 
+} from "react-native";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
-export default function ProfileScreen() {
+export default function ParentProfileScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
-  // Données simulées de l'élève
-  const studentData = {
-    name: 'Hermine Dedjene',
-    fullName: 'DEDJENE Hermine Marie',
-    class: 'Seconde C',
-    school: 'Lycée Victor Hugo',
-    matricule: 'LVH-2024-1542',
-    birthDate: '15 Mars 2009',
-    email: 'hermine.dedjene@lycee.edu',
-    parentContact: '+225 07 XX XX XX XX',
-    gender: 'Féminin',
-    mainTeacher: 'M. KOUASSI Jean',
-    classRank: 5,
-    totalSubjects: 12,
-    
+  // Infos parent
+  const parent = {
+    name: "Mme Dedjene",
+    email: "parent.dedjene@exemple.com",
+    phone: "+225 07 22 33 44 55",
+    role: "Représentante légale",
   };
 
-  const statistics = {
+  // Infos enfant
+  const child = {
+    name: "Hermine Dedjene",
+    class: "Seconde C",
+    school: "Lycée Victor Hugo",
+    birthDate: "15 Mars 2009",
+  };
+
+  // Statistiques
+  const stats = {
     average: 15.22,
     attendance: 94,
-    lateCount: 8,
-  };
-
-  const trimesterData = [
-    { period: 'Trimestre 1', average: 14.8, rank: 6, maxRank: 35 },
-    { period: 'Trimestre 2', average: 15.5, rank: 5, maxRank: 35 },
-    { period: 'En cours', average: 15.22, rank: 5, maxRank: 35 },
-  ];
-
-
-  const handleEditProfile = () => {
-    Alert.alert('Modifier le profil', 'Fonctionnalité en développement');
-  };
-
-  const handleChangePassword = () => {
-    Alert.alert('Changer le mot de passe', 'Redirection vers la page de sécurité');
+    behavior: "Bon",
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Déconnexion',
-      'Êtes-vous sûr de vouloir vous déconnecter ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Déconnexion', style: 'destructive', onPress: () => router.push('/') }
-      ]
-    );
-  };
-
-  const handleHelp = () => {
-    Alert.alert('Aide & Support', 'Contactez support@lycee.edu');
+    Alert.alert("Déconnexion", "Voulez-vous vraiment vous déconnecter ?", [
+      { text: "Annuler", style: "cancel" },
+      { text: "Déconnexion", style: "destructive", onPress: () => router.push("/") }
+    ]);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
-      
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header avec photo de profil */}
+
+        {/******** HEADER ********/}
         <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={22} color="#1F2937" />
           </TouchableOpacity>
-          
-          <Text style={styles.headerTitle}>Mon Profil</Text>
-          
-          <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
-            <Ionicons name="create-outline" size={24} color="#8B5CF6" />
-          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Profil Parent</Text>
+          <View style={{ width: 40 }} />
         </View>
 
-        {/* Section Photo et Infos principales */}
-        <View style={styles.profileSection}>
-          <View style={styles.avatarContainer}>
-            <Image 
-              
-              style={styles.avatar}
-            />
-            <TouchableOpacity style={styles.cameraButton}>
-              <Ionicons name="camera" size={18} color="white" />
-            </TouchableOpacity>
-          </View>
-          
-          <Text style={styles.studentName}>{studentData.name}</Text>
-          <Text style={styles.studentClass}>{studentData.class} • {studentData.school}</Text>
-          <Text style={styles.studentMatricule}>Matricule: {studentData.matricule}</Text>
+        {/******** SECTION PARENT ********/}
+        <View style={styles.card}>
+          <Text style={styles.title}>Informations du Parent</Text>
+
+          <InfoRow icon="person" label="Nom" value={parent.name} color="#8B5CF6" />
+          <Divider />
+          <InfoRow icon="mail" label="Email" value={parent.email} color="#3B82F6" />
+          <Divider />
+          <InfoRow icon="call" label="Téléphone" value={parent.phone} color="#10B981" />
+          <Divider />
+          <InfoRow icon="briefcase" label="Rôle" value={parent.role} color="#F97316" />
         </View>
 
-        {/* Statistiques rapides */}
+        {/******** SECTION ENFANT ********/}
+        <View style={styles.card}>
+          <Text style={styles.title}>Enfant Suivi</Text>
+
+          <InfoRow icon="school" label="Nom" value={child.name} color="#8B5CF6" />
+          <Divider />
+          <InfoRow icon="calendar" label="Date de naissance" value={child.birthDate} color="#3B82F6" />
+          <Divider />
+          <InfoRow icon="book" label="Classe" value={child.class} color="#10B981" />
+          <Divider />
+          <InfoRow icon="business" label="École" value={child.school} color="#F59E0B" />
+        </View>
+
+        {/******** STATISTIQUES ENFANT ********/}
+        <Text style={[styles.title, { marginTop: 20, marginLeft: 20 }]}>Suivi scolaire</Text>
+
         <View style={styles.statsContainer}>
-          <View style={[styles.statCard, { backgroundColor: '#F0F9FF' }]}>
-            <View style={[styles.statIconContainer, { backgroundColor: '#3B82F6' }]}>
-              <MaterialCommunityIcons name="chart-line" size={22} color="white" />
-            </View>
-            <Text style={styles.statValue}>{statistics.average}</Text>
-            <Text style={styles.statLabel}>Moyenne</Text>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${(statistics.average / 20) * 100}%`, backgroundColor: '#3B82F6' }]} />
-            </View>
-          </View>
-
-          <View style={[styles.statCard, { backgroundColor: '#F0FDF4' }]}>
-            <View style={[styles.statIconContainer, { backgroundColor: '#10B981' }]}>
-              <Ionicons name="checkmark-circle" size={22} color="white" />
-            </View>
-            <Text style={styles.statValue}>{statistics.attendance}%</Text>
-            <Text style={styles.statLabel}>Présence</Text>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${statistics.attendance}%`, backgroundColor: '#10B981' }]} />
-            </View>
-          </View>
-
-          <View style={[styles.statCard, { backgroundColor: '#FFF7ED' }]}>
-            <View style={[styles.statIconContainer, { backgroundColor: '#F59E0B' }]}>
-              <Ionicons name="time" size={22} color="white" />
-            </View>
-            <Text style={styles.statValue}>{statistics.lateCount}</Text>
-            <Text style={styles.statLabel}>Retards</Text>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: '40%', backgroundColor: '#F59E0B' }]} />
-            </View>
-          </View>
+          <StatCard 
+            icon="star" 
+            label="Moyenne" 
+            value={stats.average.toString()} 
+            color="#8B5CF6" 
+          />
+          <StatCard 
+            icon="checkmark-circle" 
+            label="Présence" 
+            value={stats.attendance + '%'} 
+            color="#10B981" 
+          />
+          <StatCard 
+            icon="heart" 
+            label="Comportement" 
+            value={stats.behavior} 
+            color="#F59E0B" 
+          />
         </View>
 
-        {/* Informations personnelles */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informations personnelles</Text>
-          
-          <View style={styles.infoCard}>
-            <InfoRow 
-              icon="person" 
-              label="Nom complet" 
-              value={studentData.fullName}
-              iconColor="#8B5CF6"
-            />
-            <View style={styles.divider} />
-            
-            <InfoRow 
-              icon="calendar" 
-              label="Date de naissance" 
-              value={studentData.birthDate}
-              iconColor="#3B82F6"
-            />
-            <View style={styles.divider} />
-            
-            <InfoRow 
-              icon="mail" 
-              label="Email" 
-              value={studentData.email}
-              iconColor="#10B981"
-            />
-            <View style={styles.divider} />
-            
-            <InfoRow 
-              icon="call" 
-              label="Contact parent" 
-              value={studentData.parentContact}
-              iconColor="#F59E0B"
-            />
-            <View style={styles.divider} />
-            
-            <InfoRow 
-              icon="male-female" 
-              label="Sexe" 
-              value={studentData.gender}
-              iconColor="#EC4899"
-              isMaterial
-            />
-          </View>
-        </View>
+        {/******** PARAMÈTRES ********/}
+        <View style={[styles.card, { marginTop: 20 }]}>
+          <Text style={styles.title}>Paramètres</Text>
 
-        {/* Section scolaire */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informations scolaires</Text>
-          
-          <View style={styles.infoCard}>
-            <InfoRow 
-              icon="school" 
-              label="Classe actuelle" 
-              value={studentData.class}
-              iconColor="#8B5CF6"
-            />
-            <View style={styles.divider} />
-            
-            <InfoRow 
-              icon="person" 
-              label="Professeur principal" 
-              value={studentData.mainTeacher}
-              iconColor="#3B82F6"
-            />
-            <View style={styles.divider} />
-            
-            <InfoRow 
-              icon="trophy" 
-              label="Rang dans la classe" 
-              value={`${studentData.classRank}ème / 35`}
-              iconColor="#F59E0B"
-            />
-            <View style={styles.divider} />
-            
-            <InfoRow 
-              icon="book" 
-              label="Matières suivies" 
-              value={`${studentData.totalSubjects} matières`}
-              iconColor="#10B981"
-            />
-          </View>
-        </View>
+          {/* Mot de passe */}
+          <SettingRow
+            icon="lock-closed"
+            label="Changer le mot de passe"
+            color="#3B82F6"
+            onPress={() => router.push("/(auth)/PasswordScreen")}
+          />
 
-        {/* Mon Parcours - Moyennes par trimestre */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Résultats Scolaires</Text>
-          
-          {trimesterData.map((trimester, index) => (
-            <View key={index} style={styles.trimesterCard}>
-              <View style={styles.trimesterHeader}>
-                <View>
-                  <Text style={styles.trimesterPeriod}>{trimester.period}</Text>
-                  <Text style={styles.trimesterRank}>Rang: {trimester.rank}ème / {trimester.maxRank}</Text>
-                </View>
-                <View style={styles.trimesterAverageContainer}>
-                  <Text style={styles.trimesterAverage}>{trimester.average}</Text>
-                  <Text style={styles.trimesterAverageLabel}>/20</Text>
-                </View>
+          <Divider />
+
+          {/* Notifications */}
+          <View style={styles.settingRow}>
+            <View style={styles.settingLeft}>
+              <View style={[styles.settingIcon, { backgroundColor: "#FEF3C7" }]}>
+                <Ionicons name="notifications" size={18} color="#F59E0B" />
               </View>
-              <View style={styles.trimesterProgressBar}>
-                <View 
-                  style={[
-                    styles.trimesterProgressFill, 
-                    { width: `${(trimester.average / 20) * 100}%` }
-                  ]} 
-                />
-              </View>
-            </View>
-          ))}
-        </View>
-
-        {/* Paramètres et Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Paramètres</Text>
-          
-          <View style={styles.settingsCard}>
-            <TouchableOpacity style={styles.settingRow} onPress={() => router.push('/(auth)/PasswordScreen')}>
-              <View style={styles.settingLeft}>
-                <View style={[styles.settingIcon, { backgroundColor: '#DBEAFE' }]}>
-                  <Ionicons name="lock-closed" size={20} color="#3B82F6" />
-                </View>
-                <Text style={styles.settingLabel}>Changer le mot de passe</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-            </TouchableOpacity>
-
-            <View style={styles.divider} />
-
-            <View style={styles.settingRow}>
-              <View style={styles.settingLeft}>
-                <View style={[styles.settingIcon, { backgroundColor: '#FEF3C7' }]}>
-                  <Ionicons name="notifications" size={20} color="#F59E0B" />
-                </View>
-                <Text style={styles.settingLabel}>Notifications</Text>
-              </View>
-              <Switch
-                value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
-                trackColor={{ false: '#D1D5DB', true: '#8B5CF6' }}
-                thumbColor={notificationsEnabled ? '#FFFFFF' : '#F3F4F6'}
-              />
+              <Text style={styles.settingLabel}>Notifications</Text>
             </View>
 
-            <View style={styles.divider} />
-
-            <TouchableOpacity style={styles.settingRow} onPress={handleHelp}>
-              <View style={styles.settingLeft}>
-                <View style={[styles.settingIcon, { backgroundColor: '#D1FAE5' }]}>
-                  <Ionicons name="help-circle" size={20} color="#10B981" />
-                </View>
-                <Text style={styles.settingLabel}>Aide & Support</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-            </TouchableOpacity>
-
-            <View style={styles.divider} />
-
-            <TouchableOpacity style={styles.settingRow} onPress={ () => router.push('/(auth)/LoginScreen')  }>
-              <View style={styles.settingLeft}>
-                <View style={[styles.settingIcon, { backgroundColor: '#FEE2E2' }]}>
-                  <Ionicons name="log-out" size={20} color="#EF4444" />
-                </View>
-                <Text style={[styles.settingLabel, { color: '#EF4444' }]}>Déconnexion</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#EF4444" />
-            </TouchableOpacity>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={setNotificationsEnabled}
+              trackColor={{ false: "#D1D5DB", true: "#8B5CF6" }}
+            />
           </View>
+
+          <Divider />
+
+          {/* Déconnexion */}
+          <SettingRow
+            icon="log-out"
+            label="Déconnexion"
+            color="#EF4444"
+            onPress={handleLogout}
+            red
+          />
         </View>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 50 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-interface InfoRowProps {
-  icon: string;
-  label: string;
-  value: string | number;
-  iconColor: string;
-  isMaterial?: boolean;
-}
+/******************* COMPONENTS *******************/
 
-// Composant réutilisable pour les lignes d'information
-const InfoRow = ({ icon, label, value, iconColor, isMaterial = false }: InfoRowProps) => {
-  const IconComponent = isMaterial ? MaterialCommunityIcons : Ionicons;
-  
-  return (
-    <View style={styles.infoRow}>
-      <View style={styles.infoLeft}>
-        <View style={[styles.infoIcon, { backgroundColor: iconColor + '20' }]}>
-          <IconComponent name={icon as any} size={18} color={iconColor} />
-        </View>
-        <Text style={styles.infoLabel}>{label}</Text>
-      </View>
-      <Text style={styles.infoValue}>{value}</Text>
-    </View>
-  );
+type InfoRowProps = {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  color: string;
 };
 
+const InfoRow = ({ icon, label, value, color }: InfoRowProps) => (
+  <View style={styles.infoRow}>
+    <View style={styles.infoLeft}>
+      <View style={[styles.infoIcon, { backgroundColor: color + "22" }]}>
+        <Ionicons name={icon} size={18} color={color} />
+      </View>
+      <Text style={styles.infoLabel}>{label}</Text>
+    </View>
+    <Text style={styles.infoValue}>{value}</Text>
+  </View>
+);
+
+type SettingRowProps = {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  color: string;
+  onPress: () => void;
+  red?: boolean;
+};
+
+const SettingRow = ({ icon, label, color, onPress, red = false }: SettingRowProps) => (
+  <TouchableOpacity style={styles.settingRow} onPress={onPress}>
+    <View style={styles.settingLeft}>
+      <View style={[styles.settingIcon, { backgroundColor: color + "22" }]}>
+        <Ionicons name={icon} size={18} color={color} />
+      </View>
+      <Text style={[styles.settingLabel, red && { color }]}>{label}</Text>
+    </View>
+    <Ionicons name="chevron-forward" size={18} color={red ? "#EF4444" : "#9CA3AF"} />
+  </TouchableOpacity>
+);
+
+type StatCardProps = {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  color: string;
+};
+
+const StatCard = ({ icon, label, value, color }: StatCardProps) => (
+  <View style={styles.statCard}>
+    <Ionicons name={icon} size={26} color={color} />
+    <Text style={styles.statValue}>{value}</Text>
+    <Text style={styles.statLabel}>{label}</Text>
+  </View>
+);
+
+const Divider = () => <View style={styles.divider} />;
+
+
+/******************* STYLES *******************/
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA', marginTop: 30},
+  container: { flex: 1, backgroundColor: "#FAFAFA" },
 
-  // Header
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#FAFAFA' },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#1F2937' },
-  editButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3E8FF', justifyContent: 'center', alignItems: 'center' },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 20,
+    borderBottomColor: "#E5E7EB",
+    borderBottomWidth: 1,
+  },
+  backButton: {
+    width: 40, height: 40, backgroundColor: "#F3F4F6",
+    borderRadius: 20, justifyContent: "center", alignItems: "center",
+  },
+  headerTitle: { fontSize: 18, fontWeight: "700", color: "#1F2937" },
 
-  // Section Photo de profil
-  profileSection: { alignItems: 'center', paddingVertical: 20, backgroundColor: 'white', marginHorizontal: 20, marginTop: 10, borderRadius: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
-  avatarContainer: { position: 'relative', marginBottom: 16 },
-  avatar: { width: 100, height: 100, borderRadius: 50, borderWidth: 4, borderColor: '#E5E7EB' },
-  cameraButton: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#8B5CF6', width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: 'white' },
-  studentName: { fontSize: 24, fontWeight: '700', color: '#1F2937', marginBottom: 6 },
-  studentClass: { fontSize: 15, color: '#6B7280', marginBottom: 4 },
-  studentMatricule: { fontSize: 13, color: '#9CA3AF', fontWeight: '500' },
+  card: {
+    backgroundColor: "white",
+    marginTop: 20,
+    marginHorizontal: 20,
+    padding: 16,
+    borderRadius: 18,
+    elevation: 2,
+  },
+  title: { fontSize: 17, fontWeight: "700", marginBottom: 12, color: "#1F2937" },
 
-  // Statistiques
-  statsContainer: { flexDirection: 'row', paddingHorizontal: 20, marginTop: 20, gap: 12 },
-  statCard: { flex: 1, padding: 16, borderRadius: 16, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  statIconContainer: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  statValue: { fontSize: 22, fontWeight: '700', color: '#1F2937', marginBottom: 4 },
-  statLabel: { fontSize: 12, color: '#6B7280', fontWeight: '600', marginBottom: 10 },
-  progressBar: { width: '100%', height: 4, backgroundColor: '#E5E7EB', borderRadius: 2, overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 2 },
+  infoRow: {
+    flexDirection: "row", justifyContent: "space-between",
+    alignItems: "center", paddingVertical: 14,
+  },
+  infoLeft: { flexDirection: "row", alignItems: "center" },
+  infoIcon: {
+    width: 36, height: 36, borderRadius: 18,
+    justifyContent: "center", alignItems: "center", marginRight: 10,
+  },
+  infoLabel: { fontSize: 14, color: "#6B7280", width: 130 },
+  infoValue: { fontSize: 14, fontWeight: "600", color: "#1F2937", flexShrink: 1, textAlign: "right" },
+  divider: { height: 1, backgroundColor: "#F3F4F6" },
 
-  // Sections
-  section: { paddingHorizontal: 20, marginTop: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1F2937', marginBottom: 14 },
+  statsContainer: { flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20, marginTop: 10 },
+  statCard: {
+    width: "30%", backgroundColor: "white",
+    borderRadius: 16, paddingVertical: 16, alignItems: "center",
+    elevation: 2,
+  },
+  statValue: { fontSize: 18, fontWeight: "700", color: "#1F2937", marginTop: 6 },
+  statLabel: { fontSize: 12, color: "#6B7280", marginTop: 2 },
 
-  // Card d'informations
-  infoCard: { backgroundColor: 'white', borderRadius: 16, padding: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 14 },
-  infoLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  infoIcon: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  infoLabel: { fontSize: 14, color: '#6B7280', fontWeight: '500', flex: 1 },
-  infoValue: { fontSize: 14, color: '#1F2937', fontWeight: '600', marginLeft: 10, textAlign: 'right' },
-  divider: { height: 1, backgroundColor: '#F3F4F6', marginHorizontal: 14 },
+  settingRow: {
+    flexDirection: "row", justifyContent: "space-between",
+    alignItems: "center", paddingVertical: 14,
+  },
+  settingLeft: { flexDirection: "row", alignItems: "center" },
+  settingIcon: {
+    width: 36, height: 36, borderRadius: 18, 
+    justifyContent: "center", alignItems: "center", marginRight: 10,
+  },
+  settingLabel: { fontSize: 15, fontWeight: "600", color: "#1F2937" },
 
-  // Trimestre Cards
-  trimesterCard: { backgroundColor: 'white', padding: 18, borderRadius: 16, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  trimesterHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  trimesterPeriod: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 4 },
-  trimesterRank: { fontSize: 13, color: '#6B7280' },
-  trimesterAverageContainer: { flexDirection: 'row', alignItems: 'baseline' },
-  trimesterAverage: { fontSize: 28, fontWeight: '700', color: '#8B5CF6' },
-  trimesterAverageLabel: { fontSize: 16, color: '#9CA3AF', fontWeight: '600', marginLeft: 2 },
-  trimesterProgressBar: { height: 8, backgroundColor: '#F3F4F6', borderRadius: 4, overflow: 'hidden' },
-  trimesterProgressFill: { height: '100%', backgroundColor: '#8B5CF6', borderRadius: 4 },
-
-  // Badges
-  badgesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  badgeCard: { width: '30.5%', backgroundColor: 'white', padding: 14, borderRadius: 16, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2, position: 'relative' },
-  badgeIconContainer: { width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
-  badgeTitle: { fontSize: 11, fontWeight: '600', color: '#1F2937', textAlign: 'center' },
-  earnedBadge: { position: 'absolute', top: 8, right: 8 },
-
-  // Paramètres
-  settingsCard: { backgroundColor: 'white', borderRadius: 16, padding: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  settingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 14 },
-  settingLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  settingIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
-  settingLabel: { fontSize: 15, fontWeight: '600', color: '#1F2937' }
+  buttonDetails: {
+    marginTop: 16,
+    backgroundColor: "#8B5CF6",
+    paddingVertical: 12,
+    borderRadius: 12,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  buttonDetailsText: { color: "white", fontWeight: "700", marginRight: 10 },
 });

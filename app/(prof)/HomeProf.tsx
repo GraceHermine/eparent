@@ -114,5 +114,4 @@ const styles = StyleSheet.create({
   actionsContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginHorizontal: 20 },
   actionCard: { width: '48%', backgroundColor: '#fff', paddingVertical: 16, paddingHorizontal: 8, borderRadius: 16, marginVertical: 8, alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, marginTop: 25 },
   actionLabel: { fontSize: 14, fontWeight: '600', color: '#1F2937', marginTop: 8, textAlign: 'center' },
-  
 });

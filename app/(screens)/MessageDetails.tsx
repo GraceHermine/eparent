@@ -4,7 +4,7 @@ import { useRouter, useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function MessageDetails() {
-  const params = useLocalSearchParams(); // permet de récupérer les params passés via router.push
+  const params = useLocalSearchParams();
   const conversationId = params.conversationId as string;
   const conversationName = params.conversationName as string;
 
@@ -32,38 +32,56 @@ export default function MessageDetails() {
 
   const renderItem = ({ item }: any) => (
     <View style={[styles.messageBubble, item.sender === "me" ? styles.myMessage : styles.otherMessage]}>
-      <Text style={[styles.messageText, item.sender === "me" ? { color: "#fff" } : { color: "#000" }]}>{item.text}</Text>
+      <Text style={[styles.messageText, item.sender === "me" ? styles.myMessageText : styles.otherMessageText]}>
+        {item.text}
+      </Text>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <View style={styles.retour}>
-        <TouchableOpacity onPress={() => router.push('/(parent)/MessageScreen')}>
-          <Ionicons name="arrow-back" size={28} color="#007AFF" />
+      {/* Header amélioré */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.push('/(parent)/MessageScreen')}
+        >
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mr Tanoh</Text>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Mr Tanoh</Text>
+          <Text style={styles.headerSubtitle}>En ligne</Text>
+        </View>
       </View>
 
-      {/* <Text style={styles.header}>{conversationName || "Conversation"}</Text> */}
-
+      {/* Zone de messages */}
       <FlatList
-        data={messages.slice().reverse()} // inverser pour que le dernier message soit en bas
+        data={messages.slice().reverse()}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={styles.messagesContainer}
         inverted
+        showsVerticalScrollIndicator={false}
       />
 
+      {/* Zone de saisie améliorée */}
       <View style={styles.inputContainer}>
-        <TextInput
-          value={newMessage}
-          onChangeText={setNewMessage}
-          placeholder="Écrire un message..."
-          style={styles.input}
-        />
-        <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
-          <Text style={{ color: "#fff", fontWeight: "700" }}>Envoyer</Text>
+        <View style={styles.inputWrapper}>
+          <TextInput
+            value={newMessage}
+            onChangeText={setNewMessage}
+            placeholder="Écrire un message..."
+            placeholderTextColor="#9CA3AF"
+            style={styles.input}
+            multiline
+          />
+        </View>
+        <TouchableOpacity 
+          onPress={sendMessage} 
+          style={styles.sendButton}
+          disabled={newMessage.trim() === ""}
+        >
+          <Text style={styles.sendButtonText}>Envoyer</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -71,30 +89,130 @@ export default function MessageDetails() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FAFAFA" },
-  retour: {
+  container: { 
+    flex: 1, 
+    backgroundColor: "#F8FAFC" 
+  },
+  header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    paddingVertical: 14,
     backgroundColor: "#3D22D4",
-    marginTop: 25
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    marginRight: 12,
+  },
+  headerContent: {
+    flex: 1,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    alignItems: 'center'
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
   },
-  header: { padding: 16, fontSize: 18, fontWeight: "700", backgroundColor: "#3D22D4", color: "#fff" },
-  messageBubble: { padding: 10, borderRadius: 16, marginVertical: 4, maxWidth: "70%" },
-  myMessage: { backgroundColor: "#3D22D4", alignSelf: "flex-end" },
-  otherMessage: { backgroundColor: "#E5E7EB", alignSelf: "flex-start" },
-  messageText: { color: "#fff" },
-  inputContainer: { flexDirection: "row", padding: 10, borderTopWidth: 1, borderTopColor: "#E5E7EB" },
-  input: { flex: 1, backgroundColor: "#fff", borderRadius: 24, paddingHorizontal: 16 },
-  sendButton: { backgroundColor: "#3D22D4", borderRadius: 24, justifyContent: "center", alignItems: "center", paddingHorizontal: 16, marginLeft: 8 }
+  headerSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 2,
+  },
+  messagesContainer: { 
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  messageBubble: { 
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    marginVertical: 6,
+    maxWidth: "80%",
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  myMessage: { 
+    backgroundColor: "#3D22D4", 
+    alignSelf: "flex-end",
+    borderBottomRightRadius: 6,
+  },
+  otherMessage: { 
+    backgroundColor: "#FFFFFF", 
+    alignSelf: "flex-start",
+    borderBottomLeftRadius: 6,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+  },
+  messageText: { 
+    fontSize: 15,
+    lineHeight: 20,
+    letterSpacing: -0.2,
+  },
+  myMessageText: { 
+    color: "#FFFFFF",
+  },
+  otherMessageText: { 
+    color: "#374151",
+  },
+  inputContainer: { 
+    flexDirection: "row", 
+    alignItems: "flex-end",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1, 
+    borderTopColor: "#F1F5F9"
+  },
+  inputWrapper: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    marginRight: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    maxHeight: 100,
+  },
+  input: { 
+    fontSize: 15,
+    color: "#374151",
+    padding: 0,
+    textAlignVertical: 'center',
+  },
+  sendButton: { 
+    backgroundColor: "#3D22D4", 
+    borderRadius: 20, 
+    justifyContent: "center", 
+    alignItems: "center", 
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    minHeight: 44,
+    shadowColor: '#3D22D4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sendButtonText: { 
+    color: "#FFFFFF", 
+    fontWeight: "600",
+    fontSize: 15,
+    letterSpacing: -0.2,
+  }
 });

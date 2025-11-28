@@ -31,13 +31,34 @@ export default function TakeAttendance() {
   };
 
   const renderItem = ({ item }: { item: { id: string; name: string; present: boolean } }) => (
-    <TouchableOpacity style={styles.studentCard} onPress={() => toggleAttendance(item.id)}>
-      <Text style={styles.studentName}>{item.name}</Text>
-      <Ionicons
-        name={item.present ? 'checkmark-circle' : 'close-circle'}
-        size={28}
-        color={item.present ? '#10B981' : '#EF4444'}
-      />
+    <TouchableOpacity 
+      style={[
+        styles.studentCard,
+        item.present && styles.presentCard
+      ]} 
+      onPress={() => toggleAttendance(item.id)}
+    >
+      <View style={styles.studentInfo}>
+        <View style={[
+          styles.avatar,
+          item.present && styles.presentAvatar
+        ]}>
+          <Text style={styles.avatarText}>
+            {item.name.split(' ').map(n => n[0]).join('')}
+          </Text>
+        </View>
+        <Text style={styles.studentName}>{item.name}</Text>
+      </View>
+      <View style={[
+        styles.statusIndicator,
+        item.present ? styles.presentIndicator : styles.absentIndicator
+      ]}>
+        <Ionicons
+          name={item.present ? 'checkmark' : 'close'}
+          size={18}
+          color="#FFFFFF"
+        />
+      </View>
     </TouchableOpacity>
   );
 
@@ -45,11 +66,36 @@ export default function TakeAttendance() {
     <View style={styles.container}>
       {/* Header avec bouton retour */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back-outline" size={28} color="#3D22D4" />
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back-outline" size={24} color="#3D22D4" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Prise de présence</Text>
-        <View style={{ width: 28 }} />
+        <View style={styles.headerSpacer} />
+      </View>
+
+      {/* Statistiques rapides */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statItem}>
+          <Text style={styles.statNumber}>
+            {students.filter(s => s.present).length}
+          </Text>
+          <Text style={styles.statLabel}>Présents</Text>
+        </View>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Text style={styles.statNumber}>
+            {students.filter(s => !s.present).length}
+          </Text>
+          <Text style={styles.statLabel}>Absents</Text>
+        </View>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Text style={styles.statNumber}>{students.length}</Text>
+          <Text style={styles.statLabel}>Total</Text>
+        </View>
       </View>
 
       {/* Liste des élèves */}
@@ -58,53 +104,181 @@ export default function TakeAttendance() {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
       />
 
       {/* Bouton enregistrer */}
-      <TouchableOpacity style={styles.saveButton} onPress={saveAttendance}>
+      <TouchableOpacity 
+        style={styles.saveButton} 
+        onPress={saveAttendance}
+      >
         <Text style={styles.saveButtonText}>Enregistrer la présence</Text>
+        <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#F8FAFC' 
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
-    elevation: 2,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    justifyContent: 'space-between',
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#3D22D4' },
-  listContainer: { padding: 16 },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+  },
+  headerTitle: { 
+    fontSize: 18, 
+    fontWeight: '700', 
+    color: '#1E293B',
+    letterSpacing: -0.3,
+  },
+  headerSpacer: { 
+    width: 40 
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    marginTop: 20,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  statDivider: {
+    width: 1,
+    height: '100%',
+    backgroundColor: '#F1F5F9',
+  },
+  listContainer: { 
+    padding: 20,
+    paddingTop: 16,
+  },
   studentCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 16,
     marginBottom: 12,
-    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  presentCard: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#D1FAE5',
+  },
+  studentInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  presentAvatar: {
+    backgroundColor: '#D1FAE5',
+  },
+  avatarText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  studentName: { 
+    fontSize: 16, 
+    fontWeight: '600', 
+    color: '#1E293B',
+    letterSpacing: -0.3,
+  },
+  statusIndicator: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    elevation: 2,
   },
-  studentName: { fontSize: 16, fontWeight: '600', color: '#1F2937' },
+  presentIndicator: {
+    backgroundColor: '#10B981',
+  },
+  absentIndicator: {
+    backgroundColor: '#EF4444',
+  },
   saveButton: {
     backgroundColor: '#3D22D4',
-    padding: 16,
-    margin: 16,
-    borderRadius: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: 18,
+    margin: 20,
+    borderRadius: 16,
+    shadowColor: '#3D22D4',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    gap: 8,
   },
-  saveButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  saveButtonText: { 
+    color: '#FFFFFF', 
+    fontSize: 16, 
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
 });

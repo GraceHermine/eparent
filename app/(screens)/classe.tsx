@@ -33,13 +33,22 @@ export default function SelectClass() {
       <Text style={styles.className}>{item.name}</Text>
 
       <View style={styles.actionsContainer}>
-        <TouchableOpacity style={styles.actionButton} onPress={() => handleAction(item.id, 'presence')}>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.presenceButton]} 
+          onPress={() => handleAction(item.id, 'presence')}
+        >
           <Text style={styles.actionText}>Présence</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={() => handleAction(item.id, 'note')}>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.noteButton]} 
+          onPress={() => handleAction(item.id, 'note')}
+        >
           <Text style={styles.actionText}>Noter</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={() => handleAction(item.id, 'remarque')}>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.remarqueButton]} 
+          onPress={() => handleAction(item.id, 'remarque')}
+        >
           <Text style={styles.actionText}>Remarque</Text>
         </TouchableOpacity>
       </View>
@@ -49,11 +58,14 @@ export default function SelectClass() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back-outline" size={28} color="#3D22D4" />
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back-outline" size={24} color="#3D22D4" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Sélectionnez la classe</Text>
-        <View style={{ width: 28 }} />
+        <View style={styles.headerSpacer} />
       </View>
 
       <FlatList
@@ -61,45 +73,103 @@ export default function SelectClass() {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#F8FAFC' 
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
-    elevation: 2,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    justifyContent: 'space-between',
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#3D22D4' },
-  listContainer: { padding: 16 },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+  },
+  headerTitle: { 
+    fontSize: 18, 
+    fontWeight: '700', 
+    color: '#1E293B',
+    letterSpacing: -0.3,
+  },
+  headerSpacer: { 
+    width: 40 
+  },
+  listContainer: { 
+    padding: 20,
+    paddingTop: 24,
+  },
   classCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
     marginBottom: 16,
-    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  className: { 
+    fontSize: 17, 
+    fontWeight: '700', 
+    color: '#1E293B', 
+    textAlign: 'center', 
+    marginBottom: 16,
+    letterSpacing: -0.3,
+  },
+  actionsContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  className: { fontSize: 16, fontWeight: '700', color: '#1F2937', textAlign: 'center', marginBottom: 12 },
-  actionsContainer: { flexDirection: 'row', justifyContent: 'space-around' },
-  actionButton: {
+  presenceButton: {
+    backgroundColor: '#10B981',
+  },
+  noteButton: {
     backgroundColor: '#3D22D4',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
   },
-  actionText: { color: '#fff', fontWeight: '600' },
+  remarqueButton: {
+    backgroundColor: '#F59E0B',
+  },
+  actionText: { 
+    color: '#FFFFFF', 
+    fontWeight: '600',
+    fontSize: 13,
+    letterSpacing: -0.2,
+  },
 });
