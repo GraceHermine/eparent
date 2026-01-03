@@ -1,43 +1,78 @@
-import React, { useState } from "react";
-import { 
-  View, Text, StyleSheet, SafeAreaView, StatusBar, 
-  TouchableOpacity, ScrollView, Switch, Alert 
+import React, { useState, useEffect } from "react";
+import {
+  View, Text, StyleSheet, SafeAreaView, StatusBar,
+  TouchableOpacity, ScrollView, Switch, Alert
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
+import { authService } from '../../services/authService';
+import { coreService } from '../../services/core';
+
 export default function ParentProfileScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [child, setChild] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Infos parent
-  const parent = {
-    name: "Mme Dedjene",
-    email: "parent.dedjene@exemple.com",
-    phone: "+225 07 22 33 44 55",
-    role: "Représentante légale",
-  };
-
-  // Infos enfant
-  const child = {
-    name: "Hermine Dedjene",
-    class: "Seconde C",
-    school: "Lycée Victor Hugo",
-    birthDate: "15 Mars 2009",
-  };
-
-  // Statistiques
-  const stats = {
-    average: 15.22,
-    attendance: 94,
+  // Stats par défaut (simulées pour l'instant car l'API ne renvoie pas encore de stats agrégées)
+  const [stats, setStats] = useState({
+    average: 0,
+    attendance: 0,
     behavior: "Bon",
+  });
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const userData = await authService.getMe();
+      setUser(userData);
+
+      const children = await coreService.getMyChildren();
+      if (children.length > 0) {
+        setChild(children[0]); // Affiche le premier enfant par défaut
+
+        // Calcul rapide de la moyenne (exemple)
+        const grades = await coreService.getStudentGrades(children[0].id);
+        if (grades.length > 0) {
+          const sum = grades.reduce((acc: number, g: any) => acc + parseFloat(g.value), 0);
+          const avg = sum / grades.length;
+          setStats(prev => ({ ...prev, average: parseFloat(avg.toFixed(2)) }));
+        }
+      }
+    } catch (error) {
+      console.error("Erreur profile:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = () => {
     Alert.alert("Déconnexion", "Voulez-vous vraiment vous déconnecter ?", [
       { text: "Annuler", style: "cancel" },
-      { text: "Déconnexion", style: "destructive", onPress: () => router.push("/") }
+      {
+        text: "Déconnexion", style: "destructive", onPress: async () => {
+          await authService.logout();
+          router.replace("/");
+        }
+      }
     ]);
   };
+
+  if (loading) return <View style={styles.container}><Text>Chargement...</Text></View>;
+
+  // Valeurs d'affichage
+  const parentName = user ? `${user.first_name} ${user.last_name}` : "Non connecté";
+  const parentEmail = user ? user.email : "";
+  const parentRole = user ? (user.role === 'PARENT' ? "Parent" : user.role) : "";
+
+  const childName = child ? `${child.first_name} ${child.last_name}` : "Aucun enfant";
+  const childClass = child?.current_class ? `${child.current_class.name}` : "Non assigné";
+  const childSchool = child?.current_class ? child.current_class.school_name : "Non assigné";
+  const childBirth = child ? new Date(child.date_of_birth).toLocaleDateString() : "";
 
   return (
     <SafeAreaView style={styles.container}>
@@ -57,49 +92,47 @@ export default function ParentProfileScreen() {
         <View style={styles.card}>
           <Text style={styles.title}>Informations du Parent</Text>
 
-          <InfoRow icon="person" label="Nom" value={parent.name} color="#8B5CF6" />
+          <InfoRow icon="person" label="Nom" value={parentName} color="#8B5CF6" />
           <Divider />
-          <InfoRow icon="mail" label="Email" value={parent.email} color="#3B82F6" />
+          <InfoRow icon="mail" label="Email" value={parentEmail} color="#3B82F6" />
           <Divider />
-          <InfoRow icon="call" label="Téléphone" value={parent.phone} color="#10B981" />
-          <Divider />
-          <InfoRow icon="briefcase" label="Rôle" value={parent.role} color="#F97316" />
+          <InfoRow icon="briefcase" label="Rôle" value={parentRole} color="#F97316" />
         </View>
 
         {/******** SECTION ENFANT ********/}
         <View style={styles.card}>
           <Text style={styles.title}>Enfant Suivi</Text>
 
-          <InfoRow icon="school" label="Nom" value={child.name} color="#8B5CF6" />
+          <InfoRow icon="school" label="Nom" value={childName} color="#8B5CF6" />
           <Divider />
-          <InfoRow icon="calendar" label="Date de naissance" value={child.birthDate} color="#3B82F6" />
+          <InfoRow icon="calendar" label="Date de naissance" value={childBirth} color="#3B82F6" />
           <Divider />
-          <InfoRow icon="book" label="Classe" value={child.class} color="#10B981" />
+          <InfoRow icon="book" label="Classe" value={childClass} color="#10B981" />
           <Divider />
-          <InfoRow icon="business" label="École" value={child.school} color="#F59E0B" />
+          <InfoRow icon="business" label="École" value={childSchool} color="#F59E0B" />
         </View>
 
         {/******** STATISTIQUES ENFANT ********/}
         <Text style={[styles.title, { marginTop: 20, marginLeft: 20 }]}>Suivi scolaire</Text>
 
         <View style={styles.statsContainer}>
-          <StatCard 
-            icon="star" 
-            label="Moyenne" 
-            value={stats.average.toString()} 
-            color="#8B5CF6" 
+          <StatCard
+            icon="star"
+            label="Moyenne"
+            value={stats.average.toString()}
+            color="#8B5CF6"
           />
-          <StatCard 
-            icon="checkmark-circle" 
-            label="Présence" 
-            value={stats.attendance + '%'} 
-            color="#10B981" 
+          <StatCard
+            icon="checkmark-circle"
+            label="Présence"
+            value={stats.attendance + '%'}
+            color="#10B981"
           />
-          <StatCard 
-            icon="heart" 
-            label="Comportement" 
-            value={stats.behavior} 
-            color="#F59E0B" 
+          <StatCard
+            icon="heart"
+            label="Comportement"
+            value={stats.behavior}
+            color="#F59E0B"
           />
         </View>
 
@@ -266,7 +299,7 @@ const styles = StyleSheet.create({
   },
   settingLeft: { flexDirection: "row", alignItems: "center" },
   settingIcon: {
-    width: 36, height: 36, borderRadius: 18, 
+    width: 36, height: 36, borderRadius: 18,
     justifyContent: "center", alignItems: "center", marginRight: 10,
   },
   settingLabel: { fontSize: 15, fontWeight: "600", color: "#1F2937" },

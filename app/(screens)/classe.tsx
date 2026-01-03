@@ -1,29 +1,44 @@
 // app/SelectClass.tsx
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { coreService } from '../../services/core';
 
 export default function SelectClass() {
   const router = useRouter();
+  const [classes, setClasses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const classes = [
-    { id: '1', name: '6ieme 2' },
-    { id: '2', name: 'Tle D1' },
-    { id: '3', name: 'Seconde C' },
-    { id: '4', name: '3ieme 4' },
-  ];
+  useEffect(() => {
+    loadClasses();
+  }, []);
 
-  const handleAction = (classId: string, action: 'presence' | 'note' | 'remarque') => {
+  const loadClasses = async () => {
+    try {
+      const data = await coreService.getTeacherClasses();
+      setClasses(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAction = (classData: any, action: 'presence' | 'note' | 'remarque') => {
+    const params: any = { classId: classData.id };
+    if (classData.subject_info) {
+      params.subjectId = classData.subject_info.id;
+    }
     switch (action) {
       case 'presence':
-        router.push('/(screens)/ListeClasse');
+        router.push({ pathname: '/(screens)/ListeClasse', params });
         break;
       case 'note':
-        router.push('/(screens)/note');
+        router.push({ pathname: '/(screens)/note', params });
         break;
       case 'remarque':
-        router.push('/(screens)/Remarques');
+        router.push({ pathname: '/(screens)/Remarques', params });
         break;
     }
   };
@@ -33,21 +48,21 @@ export default function SelectClass() {
       <Text style={styles.className}>{item.name}</Text>
 
       <View style={styles.actionsContainer}>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.presenceButton]} 
-          onPress={() => handleAction(item.id, 'presence')}
+        <TouchableOpacity
+          style={[styles.actionButton, styles.presenceButton]}
+          onPress={() => handleAction(item, 'presence')}
         >
           <Text style={styles.actionText}>Présence</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.noteButton]} 
-          onPress={() => handleAction(item.id, 'note')}
+        <TouchableOpacity
+          style={[styles.actionButton, styles.noteButton]}
+          onPress={() => handleAction(item, 'note')}
         >
           <Text style={styles.actionText}>Noter</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.remarqueButton]} 
-          onPress={() => handleAction(item.id, 'remarque')}
+        <TouchableOpacity
+          style={[styles.actionButton, styles.remarqueButton]}
+          onPress={() => handleAction(item, 'remarque')}
         >
           <Text style={styles.actionText}>Remarque</Text>
         </TouchableOpacity>
@@ -57,32 +72,40 @@ export default function SelectClass() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back-outline" size={24} color="#3D22D4" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Sélectionnez la classe</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#3D22D4" />
+        </View>
+      ) : (
+        <>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="arrow-back-outline" size={24} color="#3D22D4" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Sélectionnez la classe</Text>
+            <View style={styles.headerSpacer} />
+          </View>
 
-      <FlatList
-        data={classes}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-      />
+          <FlatList
+            data={classes}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
+          />
+        </>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#F8FAFC' 
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC'
   },
   header: {
     flexDirection: 'row',
@@ -106,16 +129,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
   },
-  headerTitle: { 
-    fontSize: 18, 
-    fontWeight: '700', 
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
     color: '#1E293B',
     letterSpacing: -0.3,
   },
-  headerSpacer: { 
-    width: 40 
+  headerSpacer: {
+    width: 40
   },
-  listContainer: { 
+  listContainer: {
     padding: 20,
     paddingTop: 24,
   },
@@ -132,16 +155,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F1F5F9',
   },
-  className: { 
-    fontSize: 17, 
-    fontWeight: '700', 
-    color: '#1E293B', 
-    textAlign: 'center', 
+  className: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1E293B',
+    textAlign: 'center',
     marginBottom: 16,
     letterSpacing: -0.3,
   },
-  actionsContainer: { 
-    flexDirection: 'row', 
+  actionsContainer: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 8,
   },
@@ -166,8 +189,8 @@ const styles = StyleSheet.create({
   remarqueButton: {
     backgroundColor: '#F59E0B',
   },
-  actionText: { 
-    color: '#FFFFFF', 
+  actionText: {
+    color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 13,
     letterSpacing: -0.2,

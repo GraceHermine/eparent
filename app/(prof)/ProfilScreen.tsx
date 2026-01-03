@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { authService } from "../../services/authService";
 
 /******************* TYPES *******************/
 type InfoRowProps = {
@@ -74,27 +75,52 @@ const Divider = () => <View style={styles.divider} />;
 /******************* MAIN COMPONENT *******************/
 export default function TeacherProfileScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const teacher = {
-    name: "M. Kouakou",
-    email: "teacher.kouakou@exemple.com",
-    phone: "+225 01 23 45 67 89",
-    subject: "Mathématiques",
-    classes: ["Seconde C", "Première B"],
+  React.useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const u = await authService.getMe();
+      setUser(u);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const teacher = {
+    name: user ? `${user.first_name} ${user.last_name}` : "Enseignant",
+    email: user ? user.email : "",
+    phone: user?.phone_number || "", // Assumons que le backend renvoie ça ou on laisse vide
+    subject: "Matière Principale", // Backend doit renvoyer ça (TODO)
+    classes: ["Seconde C", "Première B"], // DEVRAIT venir de coreService.getTeacherClasses()
+  };
+
+  // Mock stats
   const stats = {
-    averageClassScore: 14.8,
-    totalStudents: 28,
-    attendanceRate: 95,
+    averageClassScore: 12,
+    totalStudents: 0,
+    attendanceRate: 100,
   };
 
   const handleLogout = () => {
     Alert.alert("Déconnexion", "Voulez-vous vraiment vous déconnecter ?", [
       { text: "Annuler", style: "cancel" },
-      { text: "Déconnexion", style: "destructive", onPress: () => router.push("/") }
+      {
+        text: "Déconnexion", style: "destructive", onPress: async () => {
+          await authService.logout();
+          router.replace("/");
+        }
+      }
     ]);
   };
+
+  if (loading) return <View style={styles.container}><Text>Chargement...</Text></View>;
 
   return (
     <SafeAreaView style={styles.container}>

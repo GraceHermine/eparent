@@ -1,26 +1,50 @@
-// app/HomeTeacher.tsx
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { authService } from '../../services/authService';
+import { notificationsService } from '../../services/notification';
+import { coreService } from '../../services/core';
 
 export default function HomeTeacher() {
   const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const teacher = {
-    name: "Mme Fatou Bamba",
-    photo: "https://randomuser.me/api/portraits/women/68.jpg",
-    notifications: 3,
-    messageOfTheDay: "N'oubliez pas de vérifier les absences d'aujourd'hui !",
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const userData = await authService.getMe();
+      setUser(userData);
+
+      const countData = await notificationsService.getUnreadCount();
+      setUnreadCount(countData.count);
+
+      const statsData = await coreService.getTeacherStats();
+      setStats([
+        { label: "Absences", value: statsData.absences, color: "#EF4444" },
+        { label: "Notes ajoutées", value: statsData.grades, color: "#10B981" },
+        { label: "Devoirs", value: statsData.assignments, color: "#F59E0B" },
+      ]);
+    } catch (error) {
+      console.error("Erreur chargement HomeProf:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const stats = [
-    { label: "Absences", value: 5, color: "#EF4444" },
-    { label: "Retards", value: 2, color: "#F59E0B" },
-    { label: "Notes ajoutées", value: 12, color: "#10B981" },
-    
-  ];
+  const [stats, setStats] = useState([
+    { label: "Absences", value: 0, color: "#EF4444" },
+    { label: "Notes ajoutées", value: 0, color: "#10B981" },
+    { label: "Devoirs", value: 0, color: "#F59E0B" },
+  ]);
+
+  if (loading) return <View style={styles.container}><ActivityIndicator size="large" color="#3D22D4" style={{ marginTop: 50 }} /></View>
 
   return (
     <SafeAreaView style={styles.container}>
@@ -29,17 +53,24 @@ export default function HomeTeacher() {
         <View style={styles.topSection}>
           <View style={styles.header}>
             <View style={styles.profile}>
-              <Image source={{ uri: teacher.photo }} style={styles.avatar} />
+              <View style={[styles.avatar, { backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#3D22D4' }}>
+                  {user?.first_name?.charAt(0) || "P"}
+                </Text>
+              </View>
+              {/* <Image source={{ uri: "..." }} style={styles.avatar} /> */}
               <View>
-                <Text style={styles.name}>{teacher.name}</Text>
+                <Text style={styles.name}>{user ? `${user.first_name} ${user.last_name}` : "Enseignant"}</Text>
                 <Text style={styles.role}>Professeur</Text>
               </View>
             </View>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => {/* Screen notif */ }}>
               <Ionicons name="notifications-outline" size={28} color="#fff" />
-              <View style={styles.notificationBadge}>
-                <Text style={styles.notificationText}>{teacher.notifications}</Text>
-              </View>
+              {unreadCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationText}>{unreadCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -54,10 +85,10 @@ export default function HomeTeacher() {
           </View>
         </View>
 
-        {/* Message du jour */}
+        {/* Message du jour - Placeholder ou API? */}
         <View style={styles.messageCard}>
-          <Text style={styles.messageTitle}>Message du jour</Text>
-          <Text style={styles.messageText}>{teacher.messageOfTheDay}</Text>
+          <Text style={styles.messageTitle}>Message</Text>
+          <Text style={styles.messageText}>Bienvenue sur votre espace enseignant. Gérez vos classes et élèves facilement.</Text>
         </View>
 
         {/* ACTIVITé principales */}
@@ -103,10 +134,10 @@ const styles = StyleSheet.create({
   role: { color: '#e0d0ff', fontSize: 13 },
   notificationBadge: { position: 'absolute', top: -5, right: -5, backgroundColor: '#EF4444', borderRadius: 10, width: 20, height: 20, justifyContent: 'center', alignItems: 'center' },
   notificationText: { color: '#fff', fontSize: 10, fontWeight: '700' },
-  statsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, marginTop: 10,  paddingHorizontal: 16, },
-  statCard: {backgroundColor: '#688ce7', borderRadius: 16, padding: 16, marginHorizontal: 4, alignItems: 'center', width: '30%', },
+  statsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, marginTop: 10, paddingHorizontal: 16, },
+  statCard: { backgroundColor: '#688ce7', borderRadius: 16, padding: 16, marginHorizontal: 4, alignItems: 'center', width: '30%', },
   statValue: { fontSize: 22, fontWeight: '700', color: '#fff', marginBottom: 4 },
-  statLabel: { fontSize: 14, color: '#fff', fontWeight: '600',  textAlign: 'center' },
+  statLabel: { fontSize: 14, color: '#fff', fontWeight: '600', textAlign: 'center' },
   messageCard: { marginHorizontal: 20, backgroundColor: '#fff', padding: 16, borderRadius: 20, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3, marginTop: -30 },
   messageTitle: { fontSize: 16, fontWeight: 'bold', color: '#000', marginBottom: 8 },
   messageText: { fontSize: 14, color: '#555', lineHeight: 20 },

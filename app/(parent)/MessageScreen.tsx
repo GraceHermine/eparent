@@ -1,106 +1,126 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-
-interface Conversation {
-  id: number;
-  parentName: string;
-  childName: string;
-  message: string;
-  time: string;
-  read: boolean;
-}
+import { messagingService } from '../../services/message';
+import { authService } from '../../services/authService';
 
 export default function MessageScreen() {
-  const conversations: Conversation[] = [
-    {
-      id: 1,
-      parentName: 'Koffi Ornella',
-      childName: 'Charlie',
-      message: "Oui, votre fils ne s'en sort pas.",
-      time: '9:41',
-      read: true,
-    },
-  ];
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    loadConversations();
+  }, []);
+
+  const loadConversations = async () => {
+    try {
+      const user = await authService.getMe();
+      setCurrentUser(user);
+      const data = await messagingService.getConversations();
+      setConversations(data);
+    } catch (error) {
+      console.error("Erreur chargement conversations:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.headerButton}
           onPress={() => router.push('/HomeParent')}
         >
           <Ionicons name="arrow-back" size={24} color="#007AFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Messages</Text>
-        <TouchableOpacity style={styles.headerButton}>
+        <TouchableOpacity style={styles.headerButton} onPress={() => router.push("/(screens)/NewMessage") }>
           <Ionicons name="add" size={26} color="#007AFF" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {conversations.map((conv) => (
-          <TouchableOpacity 
-            key={conv.id} 
-            style={styles.messageCard} 
-            onPress={() => router.push('/(screens)/MessageDetails')}
-          >
-            {/* Avatar */}
-            <View style={styles.avatarContainer}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {conv.parentName.charAt(0)}
-                </Text>
-              </View>
-            </View>
+        {conversations.length > 0 ? (
+          conversations.map((conv) => {
+            // Determiner l'interlocuteur (celui qui n'est pas moi)
+            // Backend renvoie "participants"
+            const otherParticipant = conv.participants.find((p: any) => p.id !== currentUser?.id) || conv.participants[0];
+            const lastMsg = conv.last_message;
 
-            {/* Contenu du message */}
-            <View style={styles.messageContent}>
-              <View style={styles.messageHeader}>
-                <View style={styles.nameContainer}>
-                  <Text style={styles.parentName}>{conv.parentName}</Text>
-                  <Text style={styles.childInfo}>
-                    parent de{' '}
-                    <Text style={styles.childName}>{conv.childName}</Text>
-                  </Text>
+            return (
+              <TouchableOpacity
+                key={conv.id}
+                style={styles.messageCard}
+                onPress={() => router.push({ pathname: '/(screens)/MessageDetails', params: { id: conv.id } })}
+              >
+                {/* Avatar */}
+                <View style={styles.avatarContainer}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>
+                      {otherParticipant?.first_name?.charAt(0) || '?'}
+                    </Text>
+                  </View>
                 </View>
-              </View>
 
-              <Text style={styles.messageText} numberOfLines={2}>
-                {conv.message}
-              </Text>
-
-              <View style={styles.messageFooter}>
-                <View style={styles.footerLeft}>
-                  <Text style={styles.time}>{conv.time}</Text>
-                  {conv.read && (
-                    <View style={styles.readIndicator}>
-                      <Text style={styles.readStatus}>lu</Text>
+                {/* Contenu du message */}
+                <View style={styles.messageContent}>
+                  <View style={styles.messageHeader}>
+                    <View style={styles.nameContainer}>
+                      <Text style={styles.parentName}>
+                        {otherParticipant ? `${otherParticipant.first_name} ${otherParticipant.last_name}` : 'Inconnu'}
+                      </Text>
+                      <Text style={styles.childInfo}>
+                        {conv.subject}
+                      </Text>
                     </View>
-                  )}
+                  </View>
+
+                  <Text style={styles.messageText} numberOfLines={2}>
+                    {lastMsg ? lastMsg.content : 'Aucun message'}
+                  </Text>
+
+                  <View style={styles.messageFooter}>
+                    <View style={styles.footerLeft}>
+                      <Text style={styles.time}>
+                        {lastMsg ? new Date(lastMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                      </Text>
+                      {lastMsg && lastMsg.is_read && (
+                        <View style={styles.readIndicator}>
+                          <Text style={styles.readStatus}>lu</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
                 </View>
-                <TouchableOpacity 
-                  style={styles.replyButton}
-                  onPress={() => router.push('/(screens)/MessageDetails')}
-                >
-                  <Text style={styles.replyText}>Répondre</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+              </TouchableOpacity>
+            );
+          })
+        ) : (
+          <Text style={{ textAlign: 'center', marginTop: 20, color: '#666' }}>Aucune conversation.</Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

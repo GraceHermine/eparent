@@ -1,21 +1,35 @@
 // app/TakeAttendance.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, ActivityIndicator } from 'react-native';
 import { useRouter, SearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSearchParams } from 'expo-router/build/hooks';
 
+import { coreService } from '../../services/core';
+
 export default function TakeAttendance() {
   const router = useRouter();
-  useSearchParams(); // récupère l'id de la classe
+  const searchParams = useSearchParams();
+  const classId = searchParams.get('classId');
+  const [students, setStudents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Exemple : liste des élèves par classe (à remplacer par API ou base de données)
-  const [students, setStudents] = useState([
-    { id: '1', name: 'Fatou Keita', present: false },
-    { id: '2', name: 'Moussa Diallo', present: false },
-    { id: '3', name: 'Awa Koné', present: false },
-    { id: '4', name: 'Ibrahim Traoré', present: false },
-  ]);
+  useEffect(() => {
+    if (classId) loadStudents();
+  }, [classId]);
+
+  const loadStudents = async () => {
+    try {
+      const data = await coreService.getClassStudents(classId);
+      // Map API data to local state with 'present' flag (default true or false? let's say present by default)
+      const mapped = data.map((s: any) => ({ ...s, present: true, name: `${s.first_name} ${s.last_name}` }));
+      setStudents(mapped);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleAttendance = (id: string) => {
     setStudents((prev) =>
@@ -25,17 +39,42 @@ export default function TakeAttendance() {
     );
   };
 
-  const saveAttendance = () => {
-    // Ici tu peux appeler ton API pour sauvegarder les présences
-    Alert.alert('Succès', 'Présences enregistrées !');
+  const saveAttendance = async () => {
+    try {
+      // Loop through students (or filter modified ones)
+      setLoading(true);
+      const absents = students.filter(s => !s.present);
+
+      // We only Create Attendance for ABSENTS? Or we send status for all?
+      // Assuming backend creates "Attendance" entry for absents/delays.
+      // If present, no entry needed usually, unless we track presence explicitly.
+      // Let's assume we log ABSENCES.
+
+      for (const student of absents) {
+        await coreService.createAttendance({
+          student: student.id,
+          status: 'ABSENT', // Defaulting to absent for now
+          reason: 'Non justifié',
+          date: new Date().toISOString().split('T')[0]
+        });
+      }
+
+      Alert.alert('Succès', 'Présences enregistrées !');
+      router.back();
+    } catch (e) {
+      Alert.alert('Erreur', 'Impossible d\'enregistrer');
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderItem = ({ item }: { item: { id: string; name: string; present: boolean } }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[
         styles.studentCard,
         item.present && styles.presentCard
-      ]} 
+      ]}
       onPress={() => toggleAttendance(item.id)}
     >
       <View style={styles.studentInfo}>
@@ -64,9 +103,10 @@ export default function TakeAttendance() {
 
   return (
     <View style={styles.container}>
+      {loading && <View style={{ position: 'absolute', zIndex: 10, width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.7)' }}><ActivityIndicator size="large" color="#3D22D4" /></View>}
       {/* Header avec bouton retour */}
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
@@ -108,8 +148,8 @@ export default function TakeAttendance() {
       />
 
       {/* Bouton enregistrer */}
-      <TouchableOpacity 
-        style={styles.saveButton} 
+      <TouchableOpacity
+        style={styles.saveButton}
         onPress={saveAttendance}
       >
         <Text style={styles.saveButtonText}>Enregistrer la présence</Text>
@@ -120,49 +160,16 @@ export default function TakeAttendance() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#F8FAFC' 
-  },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 2,
+    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 3, elevation: 2,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-  },
-  headerTitle: { 
-    fontSize: 18, 
-    fontWeight: '700', 
-    color: '#1E293B',
-    letterSpacing: -0.3,
-  },
-  headerSpacer: { 
-    width: 40 
-  },
+  backButton: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#1E293B', letterSpacing: -0.3 },
+  headerSpacer: { width: 40 },
   statsContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
+    flexDirection: 'row', backgroundColor: '#FFFFFF', marginHorizontal: 20, marginTop: 20, borderRadius: 16, padding: 20, shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 8,
@@ -190,7 +197,7 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#F1F5F9',
   },
-  listContainer: { 
+  listContainer: {
     padding: 20,
     paddingTop: 16,
   },
@@ -236,9 +243,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#475569',
   },
-  studentName: { 
-    fontSize: 16, 
-    fontWeight: '600', 
+  studentName: {
+    fontSize: 16,
+    fontWeight: '600',
     color: '#1E293B',
     letterSpacing: -0.3,
   },
@@ -275,10 +282,5 @@ const styles = StyleSheet.create({
     elevation: 6,
     gap: 8,
   },
-  saveButtonText: { 
-    color: '#FFFFFF', 
-    fontSize: 16, 
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
+  saveButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', letterSpacing: -0.3 },
 });

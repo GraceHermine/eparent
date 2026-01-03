@@ -1,64 +1,103 @@
-import React, { useState } from "react";
-import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet } from "react-native";
-import { useRouter, useLocalSearchParams, router } from "expo-router";
+import React, { useState, useEffect } from "react";
+import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { messagingService } from '../../services/message';
+import { authService } from '../../services/authService';
 
 export default function MessageDetails() {
+  const router = useRouter();
   const params = useLocalSearchParams();
-  const conversationId = params.conversationId as string;
-  const conversationName = params.conversationName as string;
-
-  const [messages, setMessages] = useState([
-    { id: '1', text: "Hello, comment vous allez?", sender: "other" },
-    { id: '2', text: "Salut, je vais bien et vous, comment allez vous ?", sender: "me" },
-    { id: '3', text: "Je vais bien merci. Je vous écrit par rapport à votre fille.", sender: "other" },
-    { id: '4', text: "Ma fille, il y a un soucis avec elle ?", sender: "me" },
-    { id: '5', text: "Le soucis c'est que j'ai constaté que ces notes dans à mon cours on chuter.", sender: "other" },
-    { id: '6', text: "Comment ça se fait ?", sender: "me" },
-    { id: '7', text: "J'ai essayer de comprendre le probléme mais c'est aussi pareil dans certaine matière.", sender: "other" },
-    { id: '8', text: "Merci pour ce retour, j'en parlerai à ma fille quand elle rentrera des cours.", sender: "me" },
-    { id: '9', text: "Excusez moi, mais aujourd'hui, aucun cours n'est dispensé sur l'établissements", sender: "other" },
-    { id: '10', text: "Abon ? C'est qu'elle se trouve à la maison. Merci pour cette information. Mais les cours reprennent quand?", sender: "me" },
-    { id: '11', text: "Après les congés de noël.", sender: "other" },
-  ]);
-
+  const conversationId = params.id as string;
+  const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [conversation, setConversation] = useState<any>(null);
 
-  const sendMessage = () => {
-    if (newMessage.trim() === "") return;
-    setMessages([...messages, { id: String(messages.length + 1), text: newMessage, sender: "me" }]);
-    setNewMessage("");
+  useEffect(() => {
+    if (conversationId) {
+      loadData();
+    }
+  }, [conversationId]);
+
+  const loadData = async () => {
+    try {
+      const user = await authService.getMe();
+      setCurrentUser(user);
+      const convData = await messagingService.getConversationDetails(conversationId);
+      setConversation(convData);
+      setMessages(convData.messages || []); // Assumant que l'API renvoie { ..., messages: [] }
+    } catch (error) {
+      console.error("Erreur chargement conversation:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const renderItem = ({ item }: any) => (
-    <View style={[styles.messageBubble, item.sender === "me" ? styles.myMessage : styles.otherMessage]}>
-      <Text style={[styles.messageText, item.sender === "me" ? styles.myMessageText : styles.otherMessageText]}>
-        {item.text}
-      </Text>
-    </View>
-  );
+  const sendMessage = async () => {
+    if (newMessage.trim() === "") return;
+
+    // Optimistic update
+    const tempMsg = {
+      id: 'temp-' + Date.now(),
+      content: newMessage,
+      sender: { id: currentUser.id }, // Structure attendue par le renderItem
+      created_at: new Date().toISOString()
+    };
+    setMessages([...messages, tempMsg]);
+    setNewMessage("");
+
+    try {
+      await messagingService.sendMessage(conversationId, tempMsg.content);
+      // Recharger pour avoir le vrai ID et confirmation
+      await loadData();
+    } catch (error) {
+      console.error("Erreur envoi message:", error);
+      alert("Erreur lors de l'envoi du message");
+    }
+  };
+
+  const renderItem = ({ item }: any) => {
+    const isMe = item.sender.id === currentUser?.id;
+    return (
+      <View style={[styles.messageBubble, isMe ? styles.myMessage : styles.otherMessage]}>
+        <Text style={[styles.messageText, isMe ? styles.myMessageText : styles.otherMessageText]}>
+          {item.content}
+        </Text>
+      </View>
+    );
+  };
+
+  if (loading) {
+    return <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}><ActivityIndicator size="large" color="#3D22D4" /></View>;
+  }
+
+  // Trouver le nom de l'autre participant pour le header
+  const otherParticipant = conversation?.participants?.find((p: any) => p.id !== currentUser?.id);
+  const title = otherParticipant ? `${otherParticipant.first_name} ${otherParticipant.last_name}` : "Conversation";
 
   return (
     <View style={styles.container}>
       {/* Header amélioré */}
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.push('/(parent)/MessageScreen')}
+          onPress={() => router.back()}
         >
           <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Mr Tanoh</Text>
-          <Text style={styles.headerSubtitle}>En ligne</Text>
+          <Text style={styles.headerTitle}>{title}</Text>
+          <Text style={styles.headerSubtitle}>{conversation?.subject || 'Messagerie'}</Text>
         </View>
       </View>
 
       {/* Zone de messages */}
       <FlatList
-        data={messages.slice().reverse()}
+        data={[...messages].reverse()} // Inverser pour l'affichage 'inverted'
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.messagesContainer}
         inverted
         showsVerticalScrollIndicator={false}
@@ -76,8 +115,8 @@ export default function MessageDetails() {
             multiline
           />
         </View>
-        <TouchableOpacity 
-          onPress={sendMessage} 
+        <TouchableOpacity
+          onPress={sendMessage}
           style={styles.sendButton}
           disabled={newMessage.trim() === ""}
         >
@@ -89,9 +128,9 @@ export default function MessageDetails() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#F8FAFC" 
+  container: {
+    flex: 1,
+    backgroundColor: "#F8FAFC"
   },
   header: {
     flexDirection: 'row',
@@ -130,11 +169,11 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.8)',
     marginTop: 2,
   },
-  messagesContainer: { 
+  messagesContainer: {
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  messageBubble: { 
+  messageBubble: {
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 20,
@@ -146,36 +185,36 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
-  myMessage: { 
-    backgroundColor: "#3D22D4", 
+  myMessage: {
+    backgroundColor: "#3D22D4",
     alignSelf: "flex-end",
     borderBottomRightRadius: 6,
   },
-  otherMessage: { 
-    backgroundColor: "#FFFFFF", 
+  otherMessage: {
+    backgroundColor: "#FFFFFF",
     alignSelf: "flex-start",
     borderBottomLeftRadius: 6,
     borderWidth: 1,
     borderColor: "#F1F5F9",
   },
-  messageText: { 
+  messageText: {
     fontSize: 15,
     lineHeight: 20,
     letterSpacing: -0.2,
   },
-  myMessageText: { 
+  myMessageText: {
     color: "#FFFFFF",
   },
-  otherMessageText: { 
+  otherMessageText: {
     color: "#374151",
   },
-  inputContainer: { 
-    flexDirection: "row", 
+  inputContainer: {
+    flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: "#FFFFFF",
-    borderTopWidth: 1, 
+    borderTopWidth: 1,
     borderTopColor: "#F1F5F9"
   },
   inputWrapper: {
@@ -189,17 +228,17 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     maxHeight: 100,
   },
-  input: { 
+  input: {
     fontSize: 15,
     color: "#374151",
     padding: 0,
     textAlignVertical: 'center',
   },
-  sendButton: { 
-    backgroundColor: "#3D22D4", 
-    borderRadius: 20, 
-    justifyContent: "center", 
-    alignItems: "center", 
+  sendButton: {
+    backgroundColor: "#3D22D4",
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 10,
     minHeight: 44,
@@ -209,8 +248,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  sendButtonText: { 
-    color: "#FFFFFF", 
+  sendButtonText: {
+    color: "#FFFFFF",
     fontWeight: "600",
     fontSize: 15,
     letterSpacing: -0.2,

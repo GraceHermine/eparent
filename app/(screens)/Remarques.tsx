@@ -1,34 +1,71 @@
 // app/(prof)/screens/Remarques.tsx
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Alert, ActivityIndicator } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { coreService } from '../../services/core';
 
 export default function Remarques() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const classId = params.classId as string;
+  const subjectId = params.subjectId as string;
 
-  // Exemple : liste des élèves
-  const students = [
-    { id: '1', name: 'Alice Kouadio' },
-    { id: '2', name: 'Jean Koffi' },
-    { id: '3', name: 'Fatou Bamba' },
-  ];
-
-  // Stocke les remarques par élève
+  const [students, setStudents] = useState<any[]>([]);
   const [remarks, setRemarks] = useState<{ [key: string]: string }>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (classId) loadStudents();
+  }, [classId]);
+
+  const loadStudents = async () => {
+    try {
+      const data = await coreService.getClassStudents(classId);
+      setStudents(data);
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  };
 
   const handleChange = (id: string, text: string) => {
     setRemarks(prev => ({ ...prev, [id]: text }));
   };
 
-  const handleSave = () => {
-    console.log('Remarques enregistrées:', remarks);
-    Alert.alert('Succès', 'Remarques enregistrées avec succès !');
+  const handleSave = async () => {
+    if (!subjectId) {
+      Alert.alert("Erreur", "Matière introuvable.");
+      return;
+    }
+
+    // Filter students who have a remark text
+    const entries = Object.entries(remarks).filter(([k, v]) => v.trim().length > 0);
+    if (entries.length === 0) {
+      Alert.alert("Info", "Aucune remarque à enregistrer.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      for (const [studentId, text] of entries) {
+        await coreService.createObservation({
+          student: studentId,
+          subject: subjectId,
+          text: text
+        });
+      }
+      Alert.alert('Succès', 'Remarques enregistrées avec succès !');
+      router.back();
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Erreur", "Échec de l'enregistrement des remarques.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const renderItem = ({ item }: { item: { id: string; name: string } }) => (
+  const renderItem = ({ item }: { item: any }) => (
     <View style={styles.studentCard}>
-      <Text style={styles.studentName}>{item.name}</Text>
+      <Text style={styles.studentName}>{item.first_name} {item.last_name}</Text>
       <TextInput
         style={styles.input}
         placeholder="Écrire une remarque..."
@@ -41,19 +78,20 @@ export default function Remarques() {
 
   return (
     <View style={styles.container}>
+      {loading && <View style={styles.loadingOverlay}><ActivityIndicator size="large" color="#3D22D4" /></View>}
       {/* Header avec bouton retour */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back-outline" size={28} color="#3D22D4" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Remarques</Text>
-        <View style={{ width: 28 }} /> {/* Placeholder */}
+        <View style={{ width: 28 }} />
       </View>
 
       {/* Liste des élèves avec champs de remarques */}
       <FlatList
         data={students}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.id.toString()}
         renderItem={renderItem}
         contentContainerStyle={styles.listContainer}
       />
@@ -68,6 +106,7 @@ export default function Remarques() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
+  loadingOverlay: { position: 'absolute', zIndex: 10, width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.7)' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
