@@ -5,7 +5,8 @@ export const authService = {
     // Connexion
     login: async (username: any, password: any) => {
         try {
-            const response = await api.post('/api/auth/jwt/create/', {
+            // Enlevez le /api/ si votre urls.py ne le contient pas
+            const response = await api.post('/api/auth/jwt/create/', { 
                 username,
                 password,
             });
@@ -33,9 +34,10 @@ export const authService = {
     },
 
     // Récupérer l'utilisateur courant
+    // authService.ts
     getMe: async () => {
         try {
-            const response = await api.get('/api/auth/me/');
+            const response = await api.get('/api/auth/users/me/'); // Correction de l'URL
             return response.data;
         } catch (error) {
             throw error;

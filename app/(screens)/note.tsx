@@ -1,181 +1,135 @@
-// app/ManageGrades.tsx
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { useRouter, SearchParams } from 'expo-router';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, StatusBar, SafeAreaView } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSearchParams } from 'expo-router/build/hooks';
-
 import { coreService } from '../../services/core';
 
-export default function ManageGrades() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const classId = searchParams.get('classId');
-  const subjectId = searchParams.get('subjectId');
+// Interfaces (Inchangées)
+interface Grade { subject_name: string; value: number; comment?: string; teacher_name?: string; date: string; }
+interface Attendance { date: string; status: 'ABSENT' | 'RETARD' | string; status_display: string; }
+interface StudentDataState { grades: Grade[]; attendances: Attendance[]; remarks: any[]; }
 
-  const [students, setStudents] = useState<any[]>([]);
+export default function StudentInfoScreen() {
+  const router = useRouter();
+  const { studentId } = useLocalSearchParams();
+  const [activeTab, setActiveTab] = useState<'notes' | 'absences'>('notes');
+  const [studentData, setStudentData] = useState<StudentDataState>({ grades: [], attendances: [], remarks: [] });
   const [loading, setLoading] = useState(true);
 
-  // Load students on mount
-  React.useEffect(() => {
-    if (classId) loadStudents();
-  }, [classId]);
-
-  const loadStudents = async () => {
+  const loadAllData = useCallback(async () => {
     try {
-      const data = await coreService.getClassStudents(classId);
-      // Init empty grades for UI
-      const mapped = data.map((s: any) => ({
-        ...s,
-        devoir1: '', devoir2: '', devoir3: '', interrogation1: '', bonus: ''
-      }));
-      setStudents(mapped);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  };
-
-  const handleChange = (id: string, field: string, value: string) => {
-    setStudents(prev =>
-      prev.map(student => student.id === id ? { ...student, [field]: value } : student)
-    );
-  };
-
-  const handleSave = async () => {
-    if (!subjectId) {
-      alert("Erreur: Aucune matière détectée via la classe sélectionnée.");
-      return;
-    }
-    setLoading(true);
-    try {
-      // Iterate students and check for filled grades
-      for (const student of students) {
-        if (student.devoir1) await sendGrade(student.id, 'DEVOIR', 'Devoir 1', student.devoir1);
-        if (student.devoir2) await sendGrade(student.id, 'DEVOIR', 'Devoir 2', student.devoir2);
-        if (student.devoir3) await sendGrade(student.id, 'DEVOIR', 'Devoir 3', student.devoir3);
-        if (student.interrogation1) await sendGrade(student.id, 'INTERROGATION', 'Interro 1', student.interrogation1);
-        if (student.bonus) await sendGrade(student.id, 'BONUS', 'Bonus', student.bonus);
-      }
-      alert('Notes enregistrées avec succès !');
-      router.back();
-    } catch (e) {
-      console.error(e);
-      alert("Erreur lors de l'enregistrement");
+      setLoading(true);
+      const sId = studentId;
+      const [grades, attendances] = await Promise.all([
+        coreService.getStudentGrades(sId),
+        coreService.getStudentAttendances(sId),
+      ]);
+      setStudentData({ grades, attendances, remarks: grades.filter((g: any) => g.comment) });
+    } catch (e: any) {
+      Alert.alert('Erreur', 'Impossible de charger les données.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [studentId]);
 
-  const sendGrade = async (studentId: any, type: string, description: string, value: string) => {
-    await coreService.createGrade({
-      student: studentId,
-      subject: subjectId,
-      value: parseFloat(value),
-      type: type,
-      coef: 1,
-      description: description,
-      date: new Date().toISOString().split('T')[0]
-    });
-  };
+  useEffect(() => { if (studentId) loadAllData(); }, [loadAllData]);
 
-  const renderItem = ({ item }: { item: any }) => (
-    <View style={styles.row}>
-      <Text style={[styles.cell, { flex: 1 }]}>{item.matricule || '?'}</Text>
-      <Text style={[styles.cell, { flex: 2 }]}>{item.first_name} {item.last_name}</Text>
-      <TextInput style={styles.input} keyboardType="numeric" value={item.devoir1} onChangeText={(v) => handleChange(item.id, 'devoir1', v)} placeholder="-" />
-      <TextInput style={styles.input} keyboardType="numeric" value={item.devoir2} onChangeText={(v) => handleChange(item.id, 'devoir2', v)} placeholder="-" />
-      <TextInput style={styles.input} keyboardType="numeric" value={item.devoir3} onChangeText={(v) => handleChange(item.id, 'devoir3', v)} placeholder="-" />
-      <TextInput style={styles.input} keyboardType="numeric" value={item.interrogation1} onChangeText={(v) => handleChange(item.id, 'interrogation1', v)} placeholder="-" />
-      <TextInput style={styles.input} keyboardType="numeric" value={item.bonus} onChangeText={(v) => handleChange(item.id, 'bonus', v)} placeholder="-" />
-    </View>
-  );
+  // Groupement des notes par matière (useMemo pour la performance)
+  const groupedGrades = useMemo(() => {
+    return studentData.grades.reduce((acc, grade) => {
+      if (!acc[grade.subject_name]) acc[grade.subject_name] = [];
+      acc[grade.subject_name].push(grade);
+      return acc;
+    }, {} as Record<string, Grade[]>);
+  }, [studentData.grades]);
+
+  if (loading) return <View style={styles.centered}><ActivityIndicator size="large" color="#6366F1" /></View>;
 
   return (
-    <View style={styles.container}>
-      {loading && <View style={{ position: 'absolute', zIndex: 10, width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.7)' }}><ActivityIndicator size="large" color="#3D22D4" /></View>}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back-outline" size={28} color="#3D22D4" />
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Gestion des notes</Text>
-        <View style={{ width: 28 }} />
+        <Text style={styles.headerTitle}>Suivi Scolaire</Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView horizontal>
-        <View>
-          {/* Header du tableau */}
-          <View style={styles.row}>
-            <Text style={[styles.cell, { flex: 1, }]}>Matricule</Text>
-            <Text style={[styles.cell, { flex: 2, }]}>Nom</Text>
-            <Text style={styles.cell}>D1</Text>
-            <Text style={styles.cell}>D2</Text>
-            <Text style={styles.cell}>D3</Text>
-            <Text style={styles.cell}>I1</Text>
-            <Text style={styles.cell}>Bonus</Text>
-          </View>
+      {/* Tabs Selector */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'notes' && styles.activeTab]} 
+          onPress={() => setActiveTab('notes')}
+        >
+          <Text style={[styles.tabText, activeTab === 'notes' && styles.activeTabText]}>Notes</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'absences' && styles.activeTab]} 
+          onPress={() => setActiveTab('absences')}
+        >
+          <Text style={[styles.tabText, activeTab === 'absences' && styles.activeTabText]}>Absences</Text>
+        </TouchableOpacity>
+      </View>
 
-          <FlatList
-            data={students}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderItem}
-          />
-        </View>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {activeTab === 'notes' ? (
+          Object.keys(groupedGrades).length > 0 ? (
+            Object.entries(groupedGrades).map(([subject, grades], idx) => (
+              <View key={idx} style={styles.subjectSection}>
+                <Text style={styles.subjectHeader}>{subject}</Text>
+                <View style={styles.gradesGrid}>
+                  {grades.map((g, i) => (
+                    <View key={i} style={styles.gradeCircle}>
+                      <Text style={styles.gradeValueText}>{g.value}</Text>
+                      <Text style={styles.gradeDateText}>{new Date(g.date).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ))
+          ) : <Text style={styles.emptyText}>Aucune note enregistrée</Text>
+        ) : (
+          studentData.attendances.length > 0 ? (
+            studentData.attendances.map((a, i) => (
+              <View key={i} style={styles.attendanceCard}>
+                <View style={[styles.statusIndicator, { backgroundColor: a.status === 'ABSENT' ? '#EF4444' : '#F59E0B' }]} />
+                <View>
+                  <Text style={styles.attendanceDate}>{new Date(a.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
+                  <Text style={styles.attendanceStatus}>{a.status_display}</Text>
+                </View>
+              </View>
+            ))
+          ) : <Text style={styles.emptyText}>Aucune absence ou retard</Text>
+        )}
       </ScrollView>
-
-      {/* Bouton Enregistrer */}
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>Enregistrer</Text>
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa', paddingBottom: 100 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    justifyContent: 'space-between',
-  },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#3D22D4' },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    backgroundColor: '#fff',
-    padding: 8,
-    borderRadius: 12,
-  },
-  cell: {
-    paddingHorizontal: 8,
-    textAlign: 'center',
-    fontSize: 14,
-  },
-  input: {
-    width: 50,
-    height: 40,
-    borderWidth: 1,
-    borderColor: '#3D22D4',
-    borderRadius: 8,
-    textAlign: 'center',
-    marginHorizontal: 4,
-  },
-  saveButton: {
-    position: 'absolute',
-    bottom: 20,
-    left: 16,
-    right: 16,
-    backgroundColor: '#3D22D4',
-    paddingVertical: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  saveButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  header: { flexDirection: 'row', padding: 16, alignItems: 'center', backgroundColor: '#FFF' },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', flex: 1, textAlign: 'center' },
+  backBtn: { padding: 8, backgroundColor: '#F1F5F9', borderRadius: 10 },
+  tabBar: { flexDirection: 'row', margin: 16, backgroundColor: '#E2E8F0', borderRadius: 12, padding: 4 },
+  tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
+  activeTab: { backgroundColor: '#FFF', elevation: 2 },
+  tabText: { fontWeight: '600', color: '#64748B' },
+  activeTabText: { color: '#6366F1' },
+  scrollContent: { padding: 16 },
+  subjectSection: { backgroundColor: '#FFF', borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+  subjectHeader: { fontSize: 16, fontWeight: 'bold', color: '#1E293B', marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', paddingBottom: 8 },
+  gradesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  gradeCircle: { alignItems: 'center', justifyContent: 'center', width: 60, height: 60, borderRadius: 30, backgroundColor: '#EEF2FF', borderWidth: 1, borderColor: '#C7D2FE' },
+  gradeValueText: { fontWeight: 'bold', color: '#4338CA', fontSize: 16 },
+  gradeDateText: { fontSize: 10, color: '#64748B' },
+  attendanceCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', padding: 16, borderRadius: 12, marginBottom: 10, borderWidth: 1, borderColor: '#E2E8F0' },
+  statusIndicator: { width: 4, height: 40, borderRadius: 2, marginRight: 12 },
+  attendanceDate: { fontWeight: '600', color: '#1E293B' },
+  attendanceStatus: { color: '#64748B', fontSize: 13 },
+  emptyText: { textAlign: 'center', marginTop: 40, color: '#94A3B8' }
 });

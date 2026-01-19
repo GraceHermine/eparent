@@ -49,7 +49,14 @@ export default function MessageScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerButton}
-          onPress={() => router.push('/HomeParent')}
+          onPress={() => {
+            // Navigation dynamique selon le rôle
+            if (currentUser?.role === 'TEACHER') {
+              router.push('/(prof)/HomeProf');
+            } else {
+              router.push('/(parent)/HomeParent');
+            }
+          }}
         >
           <Ionicons name="arrow-back" size={24} color="#007AFF" />
         </TouchableOpacity>

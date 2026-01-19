@@ -73,7 +73,15 @@ export const coreService = {
 
     // Récupérer les stats du prof
     getTeacherStats: async () => {
-        const response = await api.get('/api/teacher/stats/');
+        // ATTENTION : Cette route DOIT être ajoutée dans Django urls.py
+        // car elle n'y est pas actuellement.
+        const response = await api.get('/teacher/stats/'); 
         return response.data;
-    }
+    },
+
+    // Cette fonction correspond au path('teacher/assignments/') de ton Django
+    getTeacherAssignments: async () => {
+        const response = await api.get('/teacher/assignments/');
+        return response.data;
+    },
 };

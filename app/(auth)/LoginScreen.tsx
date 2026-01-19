@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, StatusBar, Alert, } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, StatusBar, Alert, Linking } from 'react-native';
 import { TextInput, Button, Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { authService } from '@/services/authService';
-
 
 const theme = {
   ...DefaultTheme,
@@ -17,6 +16,34 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // --- NOUVELLE LOGIQUE : MOT DE PASSE OUBLIÉ ---
+  const handleForgotPassword = () => {
+    Alert.alert(
+      "Réinitialisation",
+      "Pour des raisons de sécurité, seul l'administrateur peut réinitialiser votre compte. Voulez-vous le contacter ?",
+      [
+        { text: "Annuler", style: "cancel" },
+        { 
+          text: "Contacter l'Admin", 
+          onPress: () => {
+            const adminPhone = "+2250143230738"; // 👈 Remplace par le vrai numéro de l'école
+            const message = `Bonjour, je suis un utilisateur de l'application Eparent (Nom d'utilisateur : ${username || 'Non précisé'}). J'ai oublié mon mot de passe. Pouvez-vous m'aider ?`;
+            
+            // Tente d'ouvrir WhatsApp, sinon les SMS
+            const url = `whatsapp://send?phone=${adminPhone}&text=${message}`;
+            Linking.canOpenURL(url).then(supported => {
+              if (supported) {
+                Linking.openURL(url);
+              } else {
+                Linking.openURL(`sms:${adminPhone}?body=${message}`);
+              }
+            });
+          }
+        }
+      ]
+    );
+  };
+
   const handleLogin = async () => {
     if (!username || !password) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs');
@@ -25,22 +52,16 @@ export default function LoginScreen() {
 
     try {
       setLoading(true);
-
-      // 1️⃣ LOGIN (stocke les tokens automatiquement)
       await authService.login(username, password);
-
-      // 2️⃣ RÉCUPÉRER L’UTILISATEUR CONNECTÉ
       const user = await authService.getMe();
 
-      // 3️⃣ REDIRECTION SELON LE RÔLE
-      if (user.role === 'parent') {
+      if (user.role === 'PARENT') {
         router.replace('/(parent)/HomeParent');
-      } else if (user.role === 'teacher') {
+      } else if (user.role === 'TEACHER') {
         router.replace('/(prof)/HomeProf');
       } else {
-        Alert.alert('Erreur', 'Rôle utilisateur inconnu');
+        Alert.alert('Erreur', 'Rôle utilisateur inconnu : ' + user.role);
       }
-
     } catch (error: any) {
       console.error(error);
       Alert.alert('Connexion échouée', 'Identifiants incorrects');
@@ -88,9 +109,8 @@ export default function LoginScreen() {
               left={<TextInput.Icon icon="lock-outline" />}
             />
 
-            <TouchableOpacity
-              onPress={() => router.replace('/(auth)/PasswordScreen')}
-            >
+            {/* MODIFICATION ICI : Appel de handleForgotPassword */}
+            <TouchableOpacity onPress={handleForgotPassword}>
               <Text style={styles.forgotPassword}>
                 Mot de passe oublié ?
               </Text>
@@ -114,45 +134,18 @@ export default function LoginScreen() {
   );
 }
 
+// ... styles inchangés ...
 const styles = StyleSheet.create({
-  background: { flex: 1, backgroundColor: '#3D22D4' },
-  container: { flex: 1, paddingHorizontal: 24 },
-  header: {
-    alignItems: 'center',
-    marginTop: 60,
-    marginBottom: 40,
-  },
-  appName: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  formContainer: {
-    backgroundColor: 'white',
-    borderRadius: 24,
-    padding: 24,
-    paddingTop: 32,
-    elevation: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#333',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  input: {
-    marginBottom: 16,
-    backgroundColor: 'white',
-  },
-  forgotPassword: { color: '#3D22D4', textAlign: 'right', marginBottom: 24, fontSize: 14 },
-  button: { borderRadius: 12, marginTop: 8 },
-  buttonContent: { height: 50 },
-  buttonLabel: { fontSize: 16, fontWeight: '600' },
-});
+    background: { flex: 1, backgroundColor: '#3D22D4' },
+    container: { flex: 1, paddingHorizontal: 24 },
+    header: { alignItems: 'center', marginTop: 60, marginBottom: 40 },
+    appName: { fontSize: 36, fontWeight: 'bold', color: 'white' },
+    formContainer: { backgroundColor: 'white', borderRadius: 24, padding: 24, paddingTop: 32, elevation: 8 },
+    title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', color: '#333', marginBottom: 8 },
+    subtitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 24 },
+    input: { marginBottom: 16, backgroundColor: 'white' },
+    forgotPassword: { color: '#3D22D4', textAlign: 'right', marginBottom: 24, fontSize: 14 },
+    button: { borderRadius: 12, marginTop: 8 },
+    buttonContent: { height: 50 },
+    buttonLabel: { fontSize: 16, fontWeight: '600' },
+  });
