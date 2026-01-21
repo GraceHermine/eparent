@@ -154,7 +154,7 @@ export default function ListeEnfants() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1, marginTop: 28},
   header: {
     flexDirection: 'row',
     alignItems: 'center',

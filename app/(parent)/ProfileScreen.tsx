@@ -152,7 +152,7 @@ export default function ParentProfileScreen() {
                     
                     <TouchableOpacity 
                       style={styles.buttonDetails}
-                      onPress={() => router.push({ pathname: "/(screens)/InfoScreen" as any, params: { studentId: item.id } })}
+                      onPress={() => router.push({ pathname: "/(screens)/ListeEnfants" as any, params: { studentId: item.id } })}
                     >
                       <Text style={styles.buttonDetailsText}>Consulter le carnet</Text>
                       <Ionicons name="chevron-forward" size={16} color="white" />
@@ -243,7 +243,7 @@ const Divider = () => <View style={styles.divider} />;
 // --- STYLES ---
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FAFAFA", marginTop: 20 },
+  container: { flex: 1, backgroundColor: "#FAFAFA", },
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",

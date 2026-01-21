@@ -5,7 +5,8 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,15 +30,43 @@ export default function MessageScreen() {
       const data = await messagingService.getConversations();
       setConversations(data);
     } catch (error) {
-      console.error("Erreur chargement conversations:", error);
+      console.error('Erreur chargement conversations:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  // 🔴 SUPPRESSION CONVERSATION
+  const handleDeleteConversation = (conversationId: number) => {
+    Alert.alert(
+      'Supprimer la conversation',
+      'Cette action est définitive. Voulez-vous continuer ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await messagingService.deleteConversation(conversationId);
+              setConversations(prev =>
+                prev.filter(conv => conv.id !== conversationId)
+              );
+            } catch (error) {
+              Alert.alert(
+                'Erreur',
+                'Impossible de supprimer la conversation.'
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.container, styles.center]}>
         <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
@@ -45,12 +74,11 @@ export default function MessageScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
+      {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerButton}
           onPress={() => {
-            // Navigation dynamique selon le rôle
             if (currentUser?.role === 'TEACHER') {
               router.push('/(prof)/HomeProf');
             } else {
@@ -58,136 +86,141 @@ export default function MessageScreen() {
             }
           }}
         >
-          <Ionicons name="arrow-back" size={24} color="#007AFF" />
+          <Ionicons name="arrow-back" size={22} color="#007AFF" />
         </TouchableOpacity>
+
         <Text style={styles.headerTitle}>Messages</Text>
-        <TouchableOpacity style={styles.headerButton} onPress={() => router.push("/(screens)/NewMessage") }>
-          <Ionicons name="add" size={26} color="#007AFF" />
+
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => router.push('/(screens)/NewMessage')}
+        >
+          <Ionicons name="add" size={24} color="#007AFF" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+      {/* LISTE DES CONVERSATIONS */}
+      <ScrollView contentContainerStyle={styles.content}>
         {conversations.length > 0 ? (
-          conversations.map((conv) => {
-            // Determiner l'interlocuteur (celui qui n'est pas moi)
-            // Backend renvoie "participants"
-            const otherParticipant = conv.participants.find((p: any) => p.id !== currentUser?.id) || conv.participants[0];
+          conversations.map(conv => {
+            const other = conv.participants.find(
+              (p: any) => p.id !== currentUser?.id
+            ) || conv.participants[0];
+
             const lastMsg = conv.last_message;
 
             return (
               <TouchableOpacity
                 key={conv.id}
                 style={styles.messageCard}
-                onPress={() => router.push({ pathname: '/(screens)/MessageDetails', params: { id: conv.id } })}
+                onPress={() =>
+                  router.push({
+                    pathname: '/(screens)/MessageDetails',
+                    params: { id: conv.id },
+                  })
+                }
+                onLongPress={() => handleDeleteConversation(conv.id)}
               >
-                {/* Avatar */}
-                <View style={styles.avatarContainer}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                      {otherParticipant?.first_name?.charAt(0) || '?'}
-                    </Text>
-                  </View>
+                {/* AVATAR */}
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {other?.first_name?.charAt(0) || '?'}
+                  </Text>
                 </View>
 
-                {/* Contenu du message */}
+                {/* CONTENU */}
                 <View style={styles.messageContent}>
                   <View style={styles.messageHeader}>
-                    <View style={styles.nameContainer}>
-                      <Text style={styles.parentName}>
-                        {otherParticipant ? `${otherParticipant.first_name} ${otherParticipant.last_name}` : 'Inconnu'}
+                    <View>
+                      <Text style={styles.name}>
+                        {other
+                          ? `${other.first_name} ${other.last_name}`
+                          : 'Inconnu'}
                       </Text>
-                      <Text style={styles.childInfo}>
-                        {conv.subject}
-                      </Text>
+                      <Text style={styles.subject}>{conv.subject}</Text>
                     </View>
+
+                    {/* ICÔNE SUPPRESSION (OPTIONNELLE MAIS PRO) */}
+                    <TouchableOpacity
+                      onPress={() => handleDeleteConversation(conv.id)}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={18}
+                        color="#EF4444"
+                      />
+                    </TouchableOpacity>
                   </View>
 
                   <Text style={styles.messageText} numberOfLines={2}>
                     {lastMsg ? lastMsg.content : 'Aucun message'}
                   </Text>
 
-                  <View style={styles.messageFooter}>
-                    <View style={styles.footerLeft}>
-                      <Text style={styles.time}>
-                        {lastMsg ? new Date(lastMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                      </Text>
-                      {lastMsg && lastMsg.is_read && (
-                        <View style={styles.readIndicator}>
-                          <Text style={styles.readStatus}>lu</Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
+                  <Text style={styles.time}>
+                    {lastMsg
+                      ? new Date(lastMsg.created_at).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : ''}
+                  </Text>
                 </View>
               </TouchableOpacity>
             );
           })
         ) : (
-          <Text style={{ textAlign: 'center', marginTop: 20, color: '#666' }}>Aucune conversation.</Text>
+          <Text style={styles.emptyText}>Aucune conversation.</Text>
         )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// === STYLES AMÉLIORÉS ===
+/* ================= STYLES ================= */
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+    // marginTop: 12,
+  },
+  center: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    padding: 16,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 2,
   },
   headerButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#1E293B',
-    letterSpacing: -0.3,
   },
   content: {
     padding: 16,
-    paddingTop: 20,
   },
   messageCard: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
     padding: 16,
+    borderRadius: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
     borderWidth: 1,
     borderColor: '#F1F5F9',
-  },
-  avatarContainer: {
-    marginRight: 14,
   },
   avatar: {
     width: 52,
@@ -196,11 +229,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    marginRight: 14,
   },
   avatarText: {
     color: '#FFFFFF',
@@ -209,75 +238,33 @@ const styles = StyleSheet.create({
   },
   messageContent: {
     flex: 1,
-    justifyContent: 'space-between',
   },
   messageHeader: {
-    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
   },
-  nameContainer: {
-    flex: 1,
-  },
-  parentName: {
-    fontSize: 16,
+  name: {
+    fontSize: 15,
     fontWeight: '600',
     color: '#1E293B',
-    marginBottom: 2,
-    letterSpacing: -0.3,
   },
-  childInfo: {
-    fontSize: 13,
+  subject: {
+    fontSize: 12,
     color: '#64748B',
-    lineHeight: 16,
-  },
-  childName: {
-    fontWeight: '500',
-    color: '#475569',
   },
   messageText: {
     fontSize: 14,
     color: '#475569',
-    lineHeight: 20,
-    marginBottom: 12,
-    letterSpacing: -0.2,
-  },
-  messageFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  footerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: 6,
   },
   time: {
-    fontSize: 12,
-    color: '#94A3B8',
-    fontWeight: '500',
-  },
-  readIndicator: {
-    marginLeft: 8,
-    backgroundColor: '#F0F9FF',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  readStatus: {
     fontSize: 11,
-    color: '#007AFF',
-    fontWeight: '600',
+    color: '#94A3B8',
   },
-  replyButton: {
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  replyText: {
-    fontSize: 13,
-    color: '#007AFF',
-    fontWeight: '600',
-    letterSpacing: -0.2,
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 40,
+    color: '#64748B',
   },
 });

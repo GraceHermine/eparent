@@ -65,16 +65,12 @@ export default function ProfLayout() {
         }}
       />
       <Tabs.Screen
-        name="ProfileScreen"
+        name="ProfilScreen"
         options={{
           tabBarLabel: "Profil",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons 
-              name={focused ? "person" : "person-outline"} 
-              size={size} 
-              color={color} 
-            />
-          ),
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
+            ),
         }}
       />
     </Tabs>

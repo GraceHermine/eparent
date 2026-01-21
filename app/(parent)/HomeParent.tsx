@@ -181,12 +181,12 @@ export default function HomeParents() {
               <Text style={styles.actionText}>Forums</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/(screens)/MessageScreen' as any)}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/(parent)/MessageScreen' as any)}>
               <View style={styles.actionIcon}><Ionicons name="mail-outline" size={24} color="#3D22D4" /></View>
               <Text style={styles.actionText}>Messages</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/(screen)/ListeEnfants' as any)}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/(screens)/ListeEnfants' as any)}>
               <View style={styles.actionIcon}><Ionicons name="stats-chart-outline" size={24} color="#3D22D4" /></View>
               <Text style={styles.actionText}>Résultats</Text>
             </TouchableOpacity>
@@ -206,7 +206,7 @@ export default function HomeParents() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Notes récentes</Text>
-            <TouchableOpacity onPress={() => router.push('/(parent)/ListeEnfants' as any)}>
+            <TouchableOpacity onPress={() => router.push('/(screens)/ListeEnfants' as any)}>
               <Text style={styles.seeAll}>Détails</Text>
             </TouchableOpacity>
           </View>

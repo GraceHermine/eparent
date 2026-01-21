@@ -16,33 +16,40 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // --- NOUVELLE LOGIQUE : MOT DE PASSE OUBLIÉ ---
+  
+
+ // --- MOT DE PASSE OUBLIÉ (EMAIL ADMIN) ---
   const handleForgotPassword = () => {
     Alert.alert(
-      "Réinitialisation",
-      "Pour des raisons de sécurité, seul l'administrateur peut réinitialiser votre compte. Voulez-vous le contacter ?",
+      "Réinitialisation du mot de passe",
+      "Pour des raisons de sécurité, seul l’administrateur peut réinitialiser votre compte. Souhaitez-vous le contacter par email ?",
       [
         { text: "Annuler", style: "cancel" },
-        { 
-          text: "Contacter l'Admin", 
+        {
+          text: "Contacter l’Admin",
           onPress: () => {
-            const adminPhone = "+2250143230738"; // 👈 Remplace par le vrai numéro de l'école
-            const message = `Bonjour, je suis un utilisateur de l'application Eparent (Nom d'utilisateur : ${username || 'Non précisé'}). J'ai oublié mon mot de passe. Pouvez-vous m'aider ?`;
-            
-            // Tente d'ouvrir WhatsApp, sinon les SMS
-            const url = `whatsapp://send?phone=${adminPhone}&text=${message}`;
-            Linking.canOpenURL(url).then(supported => {
-              if (supported) {
-                Linking.openURL(url);
-              } else {
-                Linking.openURL(`sms:${adminPhone}?body=${message}`);
-              }
+            const adminEmail = "dedjenehermine@gmail.com"; // 👈 email officiel
+            const subject = "Demande de réinitialisation de mot de passe";
+            const body = `Bonjour, Je suis utilisateur de l’application Eparent. Nom d’utilisateur : ${username || "Non précisé"}
+                          J’ai oublié mon mot de passe et je sollicite votre aide pour la réinitialisation.
+                          Merci par avance,
+                          Cordialement.`;
+            const mailUrl = `mailto:${adminEmail}?subject=${encodeURIComponent(
+              subject
+            )}&body=${encodeURIComponent(body)}`;
+
+            Linking.openURL(mailUrl).catch(() => {
+              Alert.alert(
+                "Erreur",
+                "Impossible d’ouvrir l’application mail sur cet appareil."
+              );
             });
-          }
-        }
+          },
+        },
       ]
     );
   };
+
 
   const handleLogin = async () => {
     if (!username || !password) {

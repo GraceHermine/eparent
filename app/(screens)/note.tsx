@@ -1,54 +1,115 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, StatusBar, SafeAreaView } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  TouchableOpacity,
+  StatusBar,
+  SafeAreaView,
+} from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { coreService } from '../../services/core';
 
-// Interfaces (Inchangées)
-interface Grade { subject_name: string; value: number; comment?: string; teacher_name?: string; date: string; }
-interface Attendance { date: string; status: 'ABSENT' | 'RETARD' | string; status_display: string; }
-interface StudentDataState { grades: Grade[]; attendances: Attendance[]; remarks: any[]; }
+// Interfaces adaptées à l'API actuelle
+interface Grade {
+  subject: number;   // ID matière
+  value: number;
+  date: string;
+  comment?: string;
+}
+
+interface Attendance {
+  date: string;
+  status: 'ABSENT' | 'RETARD' | string;
+  status_display: string;
+}
+
+interface StudentDataState {
+  grades: Grade[];
+  attendances: Attendance[];
+  remarks: any[];
+}
 
 export default function StudentInfoScreen() {
   const router = useRouter();
   const { studentId } = useLocalSearchParams();
+
   const [activeTab, setActiveTab] = useState<'notes' | 'absences'>('notes');
-  const [studentData, setStudentData] = useState<StudentDataState>({ grades: [], attendances: [], remarks: [] });
+  const [studentData, setStudentData] = useState<StudentDataState>({
+    grades: [],
+    attendances: [],
+    remarks: [],
+  });
   const [loading, setLoading] = useState(true);
 
-  const loadAllData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const sId = studentId;
-      const [grades, attendances] = await Promise.all([
-        coreService.getStudentGrades(sId),
-        coreService.getStudentAttendances(sId),
-      ]);
-      setStudentData({ grades, attendances, remarks: grades.filter((g: any) => g.comment) });
-    } catch (e: any) {
-      Alert.alert('Erreur', 'Impossible de charger les données.');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    const rawStudentId = Array.isArray(studentId) ? studentId[0] : studentId;
+
+    if (!rawStudentId || isNaN(Number(rawStudentId))) {
+      setLoading(false); // si ID invalide
+      return;
     }
+
+    const loadAllData = async () => {
+      try {
+        setLoading(true);
+        const sId = Number(rawStudentId);
+
+        const gradesResponse = await coreService.getStudentGrades(sId);
+        const attendancesResponse = await coreService.getStudentAttendances(sId);
+
+        // Mapping simple pour correspondre à ce que l'écran attend
+        const rawGrades = gradesResponse?.results ?? gradesResponse ?? [];
+        const grades: Grade[] = rawGrades.map((g: any) => ({
+          subject: g.subject,        // ID matière
+          value: g.value,
+          date: g.date,
+          comment: g.comment,
+        }));
+
+        const attendances: Attendance[] = attendancesResponse?.results ?? attendancesResponse ?? [];
+
+        setStudentData({
+          grades,
+          attendances,
+          remarks: grades.filter(g => g.comment),
+        });
+      } catch (error) {
+        Alert.alert('Erreur', 'Impossible de charger les données.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAllData();
   }, [studentId]);
 
-  useEffect(() => { if (studentId) loadAllData(); }, [loadAllData]);
-
-  // Groupement des notes par matière (useMemo pour la performance)
+  // Groupement des notes par matière (fallback sur "Matière ID" si nom non disponible)
   const groupedGrades = useMemo(() => {
     return studentData.grades.reduce((acc, grade) => {
-      if (!acc[grade.subject_name]) acc[grade.subject_name] = [];
-      acc[grade.subject_name].push(grade);
+      const key = `Matière ${grade.subject}`;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(grade);
       return acc;
     }, {} as Record<string, Grade[]>);
   }, [studentData.grades]);
 
-  if (loading) return <View style={styles.centered}><ActivityIndicator size="large" color="#6366F1" /></View>;
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#6366F1" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -58,19 +119,23 @@ export default function StudentInfoScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      {/* Tabs Selector */}
+      {/* Tabs */}
       <View style={styles.tabBar}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'notes' && styles.activeTab]} 
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'notes' && styles.activeTab]}
           onPress={() => setActiveTab('notes')}
         >
-          <Text style={[styles.tabText, activeTab === 'notes' && styles.activeTabText]}>Notes</Text>
+          <Text style={[styles.tabText, activeTab === 'notes' && styles.activeTabText]}>
+            Notes
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'absences' && styles.activeTab]} 
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'absences' && styles.activeTab]}
           onPress={() => setActiveTab('absences')}
         >
-          <Text style={[styles.tabText, activeTab === 'absences' && styles.activeTabText]}>Absences</Text>
+          <Text style={[styles.tabText, activeTab === 'absences' && styles.activeTabText]}>
+            Absences
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -84,25 +149,43 @@ export default function StudentInfoScreen() {
                   {grades.map((g, i) => (
                     <View key={i} style={styles.gradeCircle}>
                       <Text style={styles.gradeValueText}>{g.value}</Text>
-                      <Text style={styles.gradeDateText}>{new Date(g.date).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})}</Text>
+                      <Text style={styles.gradeDateText}>
+                        {new Date(g.date).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </Text>
                     </View>
                   ))}
                 </View>
               </View>
             ))
-          ) : <Text style={styles.emptyText}>Aucune note enregistrée</Text>
-        ) : (
-          studentData.attendances.length > 0 ? (
-            studentData.attendances.map((a, i) => (
-              <View key={i} style={styles.attendanceCard}>
-                <View style={[styles.statusIndicator, { backgroundColor: a.status === 'ABSENT' ? '#EF4444' : '#F59E0B' }]} />
-                <View>
-                  <Text style={styles.attendanceDate}>{new Date(a.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
-                  <Text style={styles.attendanceStatus}>{a.status_display}</Text>
-                </View>
+          ) : (
+            <Text style={styles.emptyText}>Aucune note enregistrée</Text>
+          )
+        ) : studentData.attendances.length > 0 ? (
+          studentData.attendances.map((a, i) => (
+            <View key={i} style={styles.attendanceCard}>
+              <View
+                style={[
+                  styles.statusIndicator,
+                  { backgroundColor: a.status === 'ABSENT' ? '#EF4444' : '#F59E0B' },
+                ]}
+              />
+              <View>
+                <Text style={styles.attendanceDate}>
+                  {new Date(a.date).toLocaleDateString('fr-FR', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                  })}
+                </Text>
+                <Text style={styles.attendanceStatus}>{a.status_display}</Text>
               </View>
-            ))
-          ) : <Text style={styles.emptyText}>Aucune absence ou retard</Text>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.emptyText}>Aucune absence ou retard</Text>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -122,7 +205,7 @@ const styles = StyleSheet.create({
   activeTabText: { color: '#6366F1' },
   scrollContent: { padding: 16 },
   subjectSection: { backgroundColor: '#FFF', borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#E2E8F0' },
-  subjectHeader: { fontSize: 16, fontWeight: 'bold', color: '#1E293B', marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', paddingBottom: 8 },
+  subjectHeader: { fontSize: 16, fontWeight: 'bold', color: '#1E293B', marginBottom: 12 },
   gradesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   gradeCircle: { alignItems: 'center', justifyContent: 'center', width: 60, height: 60, borderRadius: 30, backgroundColor: '#EEF2FF', borderWidth: 1, borderColor: '#C7D2FE' },
   gradeValueText: { fontWeight: 'bold', color: '#4338CA', fontSize: 16 },
@@ -131,5 +214,5 @@ const styles = StyleSheet.create({
   statusIndicator: { width: 4, height: 40, borderRadius: 2, marginRight: 12 },
   attendanceDate: { fontWeight: '600', color: '#1E293B' },
   attendanceStatus: { color: '#64748B', fontSize: 13 },
-  emptyText: { textAlign: 'center', marginTop: 40, color: '#94A3B8' }
+  emptyText: { textAlign: 'center', marginTop: 40, color: '#94A3B8' },
 });

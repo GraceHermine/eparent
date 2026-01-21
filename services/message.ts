@@ -38,5 +38,9 @@ export const messagingService = {
         const response = await api.post(`/api/messaging/conversations/${conversationId}/messages/create/`, { content });
         return response.data;
     },
+    deleteConversation(conversationId: number) {
+        return api.delete(`/messages/conversations/${conversationId}/`);
+    },
+
 
 };

@@ -37,7 +37,7 @@ export default function ParentLayout() {
         options={{
           tabBarLabel: "Message",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+            <Ionicons name= "chatbubble-ellipses" size={size} color={color} />
           ),
         }}
       />

@@ -1,10 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
-import { useRouter, useLocalSearchParams, Stack } from "expo-router";
-import { messagingService } from '../../../services/message';
-import { authService } from '../../../services/authService';
+import React, { useEffect, useState, useRef } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+} from "react-native";
+import { useLocalSearchParams, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet } from 'react-native';
+import { messagingService } from "../../../services/message";
+import { authService } from "../../../services/authService";
 
 interface User {
   id: number;
@@ -23,163 +32,217 @@ interface Conversation {
   id: number;
   subject: string;
   participants: User[];
-  messages: Message[];
 }
+
 export default function MessageDetails() {
-    const router = useRouter();
-    const { id } = useLocalSearchParams();
-    const conversationId = Number(id);
+  const { id } = useLocalSearchParams();
+  const conversationId = Number(id);
 
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [newMessage, setNewMessage] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [conversation, setConversation] = useState<Conversation | null>(null);
 
-    useEffect(() => {
-        if (!isNaN(conversationId)) {
-        loadData();
-        }
-    }, [conversationId]);
+  const flatListRef = useRef<FlatList>(null);
 
-   const loadData = async () => {
-    try {
-        setLoading(true);
-        const user = await authService.getMe();
-        setCurrentUser(user);
-
-        const data = await messagingService.getConversationDetails(conversationId);
-        
-        // LOGUEZ ICI pour voir la structure réelle
-        console.log("Données reçues de l'API:", data);
-
-        // Si 'data' est un tableau, on l'utilise directement. 
-        // Si c'est un objet avec une clé 'messages', on prend la clé.
-        const messagesList = Array.isArray(data) ? data : (data.messages || []);
-        
-        // On trie : les plus récents en bas pour une liste normale
-        setMessages([...messagesList].reverse()); 
-        
-        // Si data n'est pas le tableau, c'est l'objet conversation
-        if(!Array.isArray(data)) setConversation(data);
-        
-    } catch (error: any) {
-        console.error("Erreur chargement:", error);
-    } finally {
-        setLoading(false);
+  useEffect(() => {
+    if (!isNaN(conversationId)) {
+      loadData();
     }
-};
+  }, [conversationId]);
 
-    const sendMessage = async () => {
-        if (!newMessage.trim() || !currentUser) return;
-        const content = newMessage.trim();
-        setNewMessage("");
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      
+      // 1. Récupérer l'utilisateur courant et les messages en parallèle
+      const [user, messagesData, conversations] = await Promise.all([
+        authService.getMe(),
+        messagingService.getConversationDetails(conversationId),
+        messagingService.getConversations()
+      ]);
 
-        try {
-            const savedMsg = await messagingService.sendMessage(conversationId, content);
-            
-            // On s'assure que le sender est bien formaté pour l'affichage immédiat
-            const messageToDisplay = {
-                ...savedMsg,
-                sender: savedMsg.sender?.id ? savedMsg.sender : currentUser // Sécurité
-            };
+      setCurrentUser(user);
 
-            setMessages(prev => [...prev, messageToDisplay]);
-        } catch (error: any) {
-            alert("Erreur envoi");
-        }
+      // 2. Trouver la conversation spécifique pour le titre
+      const currentConv = conversations.find((c: Conversation) => c.id === conversationId);
+      setConversation(currentConv);
+
+      // 3. Gestion de la pagination Django (clé .results)
+      // Si Django pagine, les données sont dans data.results, sinon dans data
+      const extractedMessages = messagesData.results ? messagesData.results : messagesData;
+      
+      if (Array.isArray(extractedMessages)) {
+        setMessages(extractedMessages);
+      } else {
+        console.error("Format de messages non reconnu:", messagesData);
+      }
+
+    } catch (error) {
+      console.error("Erreur chargement données :", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !currentUser) return;
+
+    const content = newMessage.trim();
+    setNewMessage("");
+
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      content,
+      sender: currentUser,
+      created_at: new Date().toISOString(),
     };
 
-    if (loading) {
-        return (
-        <View style={styles.center}>
-            <ActivityIndicator size="large" color="#3D22D4" />
-        </View>
-        );
+    setMessages((prev) => [...prev, tempMessage]);
+
+    try {
+      const savedMsg = await messagingService.sendMessage(conversationId, content);
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === tempMessage.id ? { ...savedMsg } : msg
+        )
+      );
+      
+      // Petit délai pour laisser le rendu se faire avant de scroller
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+      
+    } catch (error) {
+      console.error("Erreur envoi message :", error);
+      setMessages((prev) => prev.filter((m) => m.id !== tempMessage.id));
     }
+  };
 
-    const otherParticipant = conversation?.participants?.find(p => p.id !== currentUser?.id);
-    const title = otherParticipant ? `${otherParticipant.first_name} ${otherParticipant.last_name}` : "Message";
-
+  if (loading) {
     return (
-        <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"} 
-        style={{ flex: 1 }}
-        keyboardVerticalOffset={90}
-        >
-        <Stack.Screen options={{ title: title, headerTintColor: '#3D22D4' }} />
-
-        <FlatList
-            data={messages}
-            // inverted   ← SUPPRIMER cette ligne ou la commenter
-            keyExtractor={item => item.id.toString()}
-            contentContainerStyle={{ padding: 10 }}
-            renderItem={({ item }) => {
-                const isMine = item.sender.id === currentUser?.id;
-                return (
-                <View style={[styles.bubble, isMine ? styles.myBubble : styles.theirBubble]}>
-                    <Text style={{ color: isMine ? '#FFF' : '#000' }}>{item.content}</Text>
-                </View>
-                );
-            }}
-        />
-
-        <View style={styles.inputContainer}>
-            <TextInput
-            value={newMessage}
-            onChangeText={setNewMessage}
-            placeholder="Écrire..."
-            style={styles.input}
-            multiline
-            />
-            <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
-            <Ionicons name="send" size={24} color="#FFF" />
-            </TouchableOpacity>
-        </View>
-        </KeyboardAvoidingView>
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#3D22D4" />
+      </View>
     );
-    }
+  }
 
-    const styles = StyleSheet.create({
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    bubble: { 
-        marginVertical: 4, 
-        padding: 12, 
-        borderRadius: 18, 
-        maxWidth: '80%' 
-    },
-    myBubble: { 
-        alignSelf: 'flex-end', 
-        backgroundColor: '#3D22D4',
-        borderBottomRightRadius: 2 
-    },
-    theirBubble: { 
-        alignSelf: 'flex-start', 
-        backgroundColor: '#E9E9EB',
-        borderBottomLeftRadius: 2 
-    },
-    inputContainer: { 
-        flexDirection: 'row', 
-        padding: 10, 
-        backgroundColor: '#FFF', 
-        alignItems: 'center',
-        borderTopWidth: 1,
-        borderColor: '#EEE'
-    },
-    input: { 
-        flex: 1, 
-        backgroundColor: '#F0F0F0', 
-        borderRadius: 20, 
-        paddingHorizontal: 15, 
-        paddingVertical: 8,
-        marginRight: 10 
-    },
-    sendButton: { 
-        backgroundColor: '#3D22D4', 
-        width: 44, 
-        height: 44, 
-        borderRadius: 22, 
-        justifyContent: 'center', 
-        alignItems: 'center'
-    }
+  // Calcul du titre (nom de l'autre personne)
+  const otherParticipant = conversation?.participants?.find(
+    (p) => p.id !== currentUser?.id
+  );
+
+  const title = otherParticipant
+    ? `${otherParticipant.first_name || ""} ${otherParticipant.last_name || ""}`.trim() || "Chat"
+    : conversation?.subject || "Conversation";
+
+  return (
+    <KeyboardAvoidingView 
+      style={{ flex: 1, backgroundColor: "#F5F5F5" }} 
+      behavior={Platform.OS === "ios" ? "padding" : undefined} 
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+    >
+      <Stack.Screen options={{ title, headerTintColor: "#3D22D4" }} />
+
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={{ padding: 12, paddingBottom: 20 }}
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+        renderItem={({ item }) => {
+          const isMine = item.sender?.id === currentUser?.id;
+          return (
+            <View style={[styles.bubble, isMine ? styles.myBubble : styles.theirBubble]}>
+              <Text style={{ color: isMine ? "#FFF" : "#000", fontSize: 16 }}>
+                {item.content}
+              </Text>
+              <Text style={[styles.timestamp, { color: isMine ? "#EEE" : "#888" }]}>
+                {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+            </View>
+          );
+        }}
+        ListEmptyComponent={
+          <Text style={{ textAlign: 'center', color: '#999', marginTop: 40 }}>
+            Aucun message dans cette discussion.
+          </Text>
+        }
+      />
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          value={newMessage}
+          onChangeText={setNewMessage}
+          placeholder="Écrire un message..."
+          style={styles.input}
+          multiline
+        />
+        <TouchableOpacity 
+          onPress={sendMessage} 
+          style={[styles.sendButton, !newMessage.trim() && { opacity: 0.5 }]}
+          disabled={!newMessage.trim()}
+        >
+          <Ionicons name="send" size={20} color="#FFF" />
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  bubble: {
+    marginVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    maxWidth: "85%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  myBubble: {
+    alignSelf: "flex-end",
+    backgroundColor: "#3D22D4",
+    borderBottomRightRadius: 4,
+  },
+  theirBubble: {
+    alignSelf: "flex-start",
+    backgroundColor: "#FFFFFF",
+    borderBottomLeftRadius: 4,
+  },
+  timestamp: {
+    fontSize: 10,
+    alignSelf: "flex-end",
+    marginTop: 4,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    padding: 12,
+    backgroundColor: "#FFF",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderColor: "#EEE",
+  },
+  input: {
+    flex: 1,
+    backgroundColor: "#F0F2F5",
+    borderRadius: 25,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    marginRight: 10,
+    maxHeight: 100,
+    fontSize: 16,
+  },
+  sendButton: {
+    backgroundColor: "#3D22D4",
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });
